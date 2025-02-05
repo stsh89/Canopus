@@ -1,8 +1,15 @@
 ## Development remarks
 
-### Create and store PostgreSQL database password
+### Prepare Docker environment
+
+Change content of the .\docker\postgres.env.example file to match your environment and rename the file to .\docker\postgres.env
 
 ```pwsh
-$pwd =  [guid]::NewGuid().ToString().Replace("-", "").Substring(0, 24)
-Add-Content -Path .\secrets\postgres-passwd -Value $pwd
+Copy-Item .\docker\postgres.env.example .\docker\postgres.env
+```
+
+### Start PostgreSQL container
+
+```
+docker compose --file .\docker\compose.yaml up -d
 ```
