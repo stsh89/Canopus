@@ -4,8 +4,5 @@
 
 ```pwsh
 $pwd =  [guid]::NewGuid().ToString().Replace("-", "").Substring(0, 24)
-
-Add-Content `
-	-Path .\secrets\postgres-passwd `
-	-Value $pwd
+Add-Content -Path .\secrets\postgres-passwd -Value $pwd
 ```
