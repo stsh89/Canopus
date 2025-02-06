@@ -1,0 +1,13 @@
+[package]
+name = "canopus-dataspine"
+version = "0.1.0"
+edition = { workspace = true }
+
+[lib]
+name = "canopus_dataspine"
+
+[dependencies]
+dotenvy = { workspace = true }
+sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "uuid"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+uuid = { workspace = true, features = ["v4"] }
