@@ -16,6 +16,22 @@ RETURNING id
     Ok(rec.id)
 }
 
+pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
+    let rec = sqlx::query!("DELETE FROM remarks WHERE id = $1", id)
+        .execute(pool)
+        .await?;
+
+    Ok(rec.rows_affected())
+}
+
+pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
+    let rec = sqlx::query!("SELECT essence FROM remarks WHERE id = $1", id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(rec.essence)
+}
+
 pub async fn update(pool: &PgPool, id: Uuid, text: &str) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
@@ -33,20 +49,4 @@ WHERE
     .await?;
 
     Ok(rec.rows_affected())
-}
-
-pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!("DELETE FROM remarks WHERE id = $1", id)
-        .execute(pool)
-        .await?;
-
-    Ok(rec.rows_affected())
-}
-
-pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
-    let rec = sqlx::query!("SELECT essence FROM remarks WHERE id = $1", id)
-        .fetch_one(pool)
-        .await?;
-
-    Ok(rec.essence)
 }
