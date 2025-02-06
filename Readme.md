@@ -29,9 +29,3 @@ sqlx database create
 ```pwsh
 sqlx migrate run
 ```
-
-### Migrations history
-
-```pwsh
-sqlx migrate add -r create_remarks
-```

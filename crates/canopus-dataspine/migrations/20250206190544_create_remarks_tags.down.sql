@@ -1,3 +1,3 @@
 -- Add down migration script here
 
-DROP TABLE remarks
+DROP TABLE remarks_tags
