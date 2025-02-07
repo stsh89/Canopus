@@ -31,3 +31,22 @@ pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
 
     Ok(rec.title)
 }
+
+pub async fn update(pool: &PgPool, id: Uuid, title: &str) -> Result<u64, sqlx::Error> {
+    let rec = sqlx::query!(
+        r#"
+UPDATE tags
+SET
+    title = $2,
+    updated_at = DEFAULT
+WHERE
+    id = $1
+        "#,
+        id,
+        title
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(rec.rows_affected())
+}

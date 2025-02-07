@@ -41,6 +41,14 @@ pub async fn get_remark_essence(pool: &PgPool, id: Uuid) -> sqlx::Result<String>
     Ok(essence)
 }
 
+pub async fn get_tag_title(pool: &PgPool, id: Uuid) -> sqlx::Result<String> {
+    let essence = sqlx::query_scalar!(r#"SELECT title FROM tags WHERE id = $1"#, id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(essence)
+}
+
 pub async fn remark_exists(pool: &PgPool, id: Uuid) -> sqlx::Result<bool> {
     let exists = sqlx::query_scalar!(
         r#"SELECT EXISTS(SELECT 1 FROM remarks WHERE id = $1) as "exists!""#,

@@ -32,7 +32,7 @@ pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
     Ok(rec.essence)
 }
 
-pub async fn update(pool: &PgPool, id: Uuid, text: &str) -> Result<u64, sqlx::Error> {
+pub async fn update(pool: &PgPool, id: Uuid, essence: &str) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 UPDATE remarks
@@ -43,7 +43,7 @@ WHERE
     id = $1
         "#,
         id,
-        text
+        essence
     )
     .execute(pool)
     .await?;
