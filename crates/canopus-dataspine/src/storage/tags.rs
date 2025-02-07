@@ -23,3 +23,11 @@ pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
 
     Ok(rec.rows_affected())
 }
+
+pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
+    let rec = sqlx::query!("SELECT title FROM tags WHERE id = $1", id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(rec.title)
+}
