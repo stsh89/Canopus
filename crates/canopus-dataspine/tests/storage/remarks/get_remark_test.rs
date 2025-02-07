@@ -1,6 +1,6 @@
+use crate::support;
 use canopus_dataspine::storage::remarks;
 use sqlx::PgPool;
-use crate::support;
 
 #[sqlx::test(fixtures("remarks"))]
 async fn it_gets_remark(pool: PgPool) -> sqlx::Result<()> {

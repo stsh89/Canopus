@@ -1,6 +1,6 @@
+use crate::support;
 use canopus_dataspine::storage::tags;
 use sqlx::PgPool;
-use crate::support;
 
 #[sqlx::test]
 async fn it_creates_tag(pool: PgPool) -> sqlx::Result<()> {

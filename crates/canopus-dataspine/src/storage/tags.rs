@@ -15,3 +15,11 @@ RETURNING id
 
     Ok(rec.id)
 }
+
+pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
+    let rec = sqlx::query!("DELETE FROM tags WHERE id = $1", id)
+        .execute(pool)
+        .await?;
+
+    Ok(rec.rows_affected())
+}
