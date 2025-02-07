@@ -1,14 +1,14 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub async fn create(pool: &PgPool, text: &str) -> Result<Uuid, sqlx::Error> {
+pub async fn create(pool: &PgPool, essence: &str) -> Result<Uuid, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 INSERT INTO remarks ( essence )
 VALUES ( $1 )
 RETURNING id
         "#,
-        text
+        essence
     )
     .fetch_one(pool)
     .await?;

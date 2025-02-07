@@ -9,6 +9,14 @@ pub async fn count_remarks(pool: &PgPool) -> sqlx::Result<i64> {
     Ok(count)
 }
 
+pub async fn count_tags(pool: &PgPool) -> sqlx::Result<i64> {
+    let count = sqlx::query_scalar!(r#"SELECT COUNT(*) as "count!" FROM tags"#)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(count)
+}
+
 pub async fn get_first_remark(pool: &PgPool) -> sqlx::Result<Uuid> {
     let id = sqlx::query_scalar!(r#"SELECT id FROM remarks ORDER BY created_at DESC LIMIT 1"#)
         .fetch_one(pool)
