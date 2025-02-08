@@ -1,7 +1,11 @@
-use sqlx::PgPool;
+use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;
 
-pub async fn create(pool: &PgPool, remark_id: Uuid, tag_id: Uuid) -> Result<(), sqlx::Error> {
+pub async fn create(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+    tag_id: Uuid,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
 INSERT INTO remarks_tags ( remark_id, tag_id )
@@ -10,7 +14,7 @@ VALUES ( $1, $2 )
         remark_id,
         tag_id,
     )
-    .execute(pool)
+    .execute(&mut **tx)
     .await?;
 
     Ok(())

@@ -6,7 +6,7 @@ use sqlx::PgPool;
 async fn it_updates_tag(pool: PgPool) -> sqlx::Result<()> {
     let id = support::get_first_tag(&pool).await?;
     let title_was = support::get_tag_title(&pool, id).await?;
-    let new_title = "Cybernetics";
+    let new_title = "cybernetics";
     assert!(title_was != new_title);
 
     tags::update(&pool, id, new_title).await?;

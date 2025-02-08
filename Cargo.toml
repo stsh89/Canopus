@@ -2,15 +2,22 @@
 resolver = "3"
 members = [
     "crates/canopus-dataspine",
+    "crates/canopus-protocol",
+    "crates/canopus-repository",
 ]
 
 [workspace.package]
 edition = "2021"
 
 [workspace.dependencies]
+chrono = "0.4.39"
 dotenvy = "0.15.7"
+eyre = "0.6.12"
 sqlx = "0.8.3"
+thiserror = "2.0.11"
 tokio = "1.43.0"
 uuid = "1.13.1"
 
 canopus-dataspine = { path = "crates/canopus-dataspine"}
+canopus-protocol = { path = "crates/canopus-protocol" }
+canopus-repository = { path = "crates/canopus-repository" }

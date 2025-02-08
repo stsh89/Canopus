@@ -1,7 +1,7 @@
-use sqlx::PgPool;
+use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;
 
-pub async fn create(pool: &PgPool, essence: &str) -> Result<Uuid, sqlx::Error> {
+pub async fn create(tx: &mut PgTransaction<'_>, essence: &str) -> Result<Uuid, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 INSERT INTO remarks ( essence )
@@ -10,7 +10,7 @@ RETURNING id
         "#,
         essence
     )
-    .fetch_one(pool)
+    .fetch_one(&mut **tx)
     .await?;
 
     Ok(rec.id)

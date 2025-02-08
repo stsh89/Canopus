@@ -8,7 +8,7 @@ WITH inserted_remark AS (
 ),
 inserted_tag AS (
     INSERT INTO tags (title)
-    VALUES ('Philosophy')
+    VALUES ('philosophy')
     RETURNING id
 )
 INSERT INTO remarks_tags (remark_id, tag_id)
