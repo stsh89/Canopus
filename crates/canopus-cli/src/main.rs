@@ -27,7 +27,11 @@ async fn main() -> anyhow::Result<()>{
     let engine = Engine::start().await?;
 
     match cli.command {
-        Commands::NewRemark { essence, tags } => create_remark(&engine, NewRemark { essence, tags }).await?,
+        Commands::NewRemark { essence, tags } => {
+            let id = create_remark(&engine, NewRemark { essence, tags }).await?;
+
+            println!("Created remark with id: {}", id);
+        }
     };
 
     Ok(())
