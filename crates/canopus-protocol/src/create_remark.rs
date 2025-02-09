@@ -11,7 +11,7 @@ pub trait SaveRemark {
     fn save_remark(&self, new_remark: NewRemark) -> impl Future<Output = Result<Uuid>>;
 }
 
-pub async fn create_remark(new_remark: NewRemark, repository: impl SaveRemark) -> Result<Uuid> {
+pub async fn create_remark(new_remark: NewRemark, repository: &impl SaveRemark) -> Result<Uuid> {
     let NewRemark { essence, tags } = new_remark;
 
     let new_remark = NewRemark {

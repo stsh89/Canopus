@@ -33,7 +33,7 @@ pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
 }
 
 pub async fn find(tx: &mut PgTransaction<'_>, title: &str) -> Result<Option<Uuid>, sqlx::Error> {
-    let rec = sqlx::query_scalar!(r#"SELECT id FROM tags WHERE title = $1"#, title)
+    let rec = sqlx::query_scalar!(r#"SELECT id FROM tags WHERE title = lower($1)"#, title)
         .fetch_optional(&mut **tx)
         .await?;
 

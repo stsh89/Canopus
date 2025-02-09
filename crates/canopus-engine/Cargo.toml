@@ -1,0 +1,17 @@
+[package]
+name = "canopus-engine"
+version = "0.1.0"
+edition = { workspace = true }
+
+[lib]
+name = "canopus_engine"
+
+[dependencies]
+dotenvy = { workspace = true }
+eyre = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+canopus-protocol = { workspace = true }
+canopus-repository = { workspace = true }
