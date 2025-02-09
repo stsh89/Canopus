@@ -37,9 +37,8 @@ impl Engine {
 }
 
 fn initialize_environment() -> Result<()> {
-    dotenvy::dotenv().map_err(|err| {
-        Error::File(eyre::Error::from(err).wrap_err("Failed to load .env file"))
-    })?;
+    dotenvy::dotenv()
+        .map_err(|err| Error::File(eyre::Error::from(err).wrap_err("Failed to load .env file")))?;
 
     Ok(())
 }

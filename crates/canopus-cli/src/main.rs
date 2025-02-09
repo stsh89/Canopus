@@ -1,5 +1,6 @@
-use canopus_engine::{operations::create_remark, Engine};
-use canopus_protocol::NewRemark;
+mod remarks;
+
+use canopus_engine::Engine;
 use clap::{command, Parser, Subcommand};
 
 #[derive(Parser)]
@@ -11,27 +12,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(name = "New-Remark")]
-    NewRemark {
-        #[arg(id = "Essence", long)]
-        essence: String,
+    #[command(name = "New-Remark", alias = "new-remark")]
+    NewRemark(NewRemarkArguments),
+}
 
-        #[arg(id = "Tag", long)]
-        tags: Vec<String>,
-    }
+#[derive(Parser)]
+struct NewRemarkArguments {
+    #[arg(id = "Essence", long, alias = "essence")]
+    essence: String,
+
+    #[arg(id = "Tag", long, alias = "tag")]
+    tags: Vec<String>,
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()>{
+async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let engine = Engine::start().await?;
 
     match cli.command {
-        Commands::NewRemark { essence, tags } => {
-            let id = create_remark(&engine, NewRemark { essence, tags }).await?;
-
-            println!("Created remark with id: {}", id);
-        }
+        Commands::NewRemark(arguments) => remarks::new(&engine, arguments).await?,
     };
 
     Ok(())
