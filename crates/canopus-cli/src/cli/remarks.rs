@@ -1,3 +1,4 @@
+use crate::cli::formatter;
 use canopus_engine::{
     remarks::{self, NewRemark},
     Engine,
@@ -25,7 +26,7 @@ pub async fn get_remark(engine: &Engine, arguments: GetRemarkArguments) -> anyho
 
     let remark = remarks::get_remark(engine, id).await?;
 
-    println!("Remark: {}", **remark.essence());
+    formatter::write_object(remark, std::io::stdout())?;
 
     Ok(())
 }
@@ -35,7 +36,7 @@ pub async fn new_remark(engine: &Engine, arguments: NewRemarkArguments) -> anyho
 
     let id = remarks::create_remark(engine, NewRemark { essence, tags }).await?;
 
-    println!("Created remark with id: {}", id);
+    formatter::write_object(id, std::io::stdout())?;
 
     Ok(())
 }

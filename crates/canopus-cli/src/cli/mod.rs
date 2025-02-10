@@ -1,3 +1,4 @@
+mod formatter;
 mod remarks;
 
 use canopus_engine::Engine;
