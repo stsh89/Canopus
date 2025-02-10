@@ -1,7 +1,16 @@
+use canopus_protocol::tags::{Tag, TagAttributes};
+use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;
 
-pub async fn create(tx: &mut PgTransaction<'_>, title: &str) -> Result<Uuid, sqlx::Error> {
+pub struct TagRow {
+    pub id: Uuid,
+    pub title: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+pub async fn create_tag(tx: &mut PgTransaction<'_>, title: &str) -> Result<Uuid, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 INSERT INTO tags ( title )
@@ -16,7 +25,7 @@ RETURNING id
     Ok(rec.id)
 }
 
-pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
+pub async fn delete_tag(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!("DELETE FROM tags WHERE id = $1", id)
         .execute(pool)
         .await?;
@@ -24,12 +33,12 @@ pub async fn delete(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
     Ok(rec.rows_affected())
 }
 
-pub async fn get(pool: &PgPool, id: Uuid) -> Result<String, sqlx::Error> {
-    let rec = sqlx::query!("SELECT title FROM tags WHERE id = $1", id)
+pub async fn get_tag(pool: &PgPool, id: Uuid) -> Result<TagRow, sqlx::Error> {
+    let row = sqlx::query_as!(TagRow, "SELECT * FROM tags WHERE id = $1", id)
         .fetch_one(pool)
         .await?;
 
-    Ok(rec.title)
+    Ok(row)
 }
 
 pub async fn find(tx: &mut PgTransaction<'_>, title: &str) -> Result<Option<Uuid>, sqlx::Error> {
@@ -57,4 +66,22 @@ WHERE
     .await?;
 
     Ok(rec.rows_affected())
+}
+
+impl From<TagRow> for Tag {
+    fn from(value: TagRow) -> Self {
+        let TagRow {
+            id,
+            title,
+            created_at,
+            updated_at,
+        } = value;
+
+        Self::new(TagAttributes {
+            id,
+            title,
+            created_at,
+            updated_at,
+        })
+    }
 }

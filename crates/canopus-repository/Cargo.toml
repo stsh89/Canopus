@@ -9,9 +9,8 @@ name = "canopus_repository"
 [dependencies]
 chrono = { workspace = true }
 eyre = { workspace = true }
-sqlx = { workspace = true }
+sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "chrono", "uuid"] }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 
 canopus-protocol = { workspace = true }
-canopus-dataspine = { workspace = true }

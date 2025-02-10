@@ -1,6 +1,10 @@
-use canopus_dataspine::storage::{remarks, remarks_tags, tags};
-use canopus_protocol::{NewRemark, SaveRemark};
+pub mod remarks;
+pub mod remarks_tags;
+pub mod tags;
+
+use canopus_protocol::remarks::{GetRemark, NewRemark, Remark, SaveRemark};
 use sqlx::PgTransaction;
+use uuid::Uuid;
 
 #[derive(thiserror::Error, Debug)]
 enum Error {
@@ -14,15 +18,36 @@ pub struct Repository {
     pub pool: sqlx::PgPool,
 }
 
+impl GetRemark for Repository {
+    async fn get_remark(&self, id: Uuid) -> canopus_protocol::Result<Remark> {
+        let remark = get_remark(self, id).await?;
+
+        Ok(remark)
+    }
+}
+
 impl SaveRemark for Repository {
-    async fn save_remark(&self, new_remark: NewRemark) -> canopus_protocol::Result<uuid::Uuid> {
+    async fn save_remark(&self, new_remark: NewRemark) -> canopus_protocol::Result<Uuid> {
         let id = save_remark(self, new_remark).await?;
 
         Ok(id)
     }
 }
 
-async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<uuid::Uuid> {
+async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
+    let mut remark: Remark = remarks::get_remark(&repository.pool, id).await?.into();
+    let tags = remarks::list_tags(&repository.pool, id)
+        .await?
+        .into_iter()
+        .map(Into::into)
+        .collect();
+
+    remark.set_tags(tags);
+
+    Ok(remark)
+}
+
+async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid> {
     let mut tx = repository.pool.begin().await?;
     let id = create_remark(&mut tx, new_remark).await?;
     tx.commit().await?;
@@ -39,7 +64,7 @@ impl From<Error> for canopus_protocol::Error {
 async fn create_remark(tx: &mut PgTransaction<'_>, new_remark: NewRemark) -> Result<uuid::Uuid> {
     let NewRemark { essence, tags } = new_remark;
 
-    let remark_id = remarks::create(tx, &essence).await?;
+    let remark_id = remarks::create_remark(tx, &essence).await?;
 
     for tag in tags {
         let tag_id = find_or_create_tag(tx, &tag).await?;
@@ -54,5 +79,5 @@ async fn find_or_create_tag(tx: &mut PgTransaction<'_>, title: &str) -> sqlx::Re
         return Ok(id);
     };
 
-    tags::create(tx, title).await
+    tags::create_tag(tx, title).await
 }

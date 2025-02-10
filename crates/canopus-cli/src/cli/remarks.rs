@@ -1,0 +1,41 @@
+use canopus_engine::{
+    remarks::{self, NewRemark},
+    Engine,
+};
+use clap::Parser;
+use uuid::Uuid;
+
+#[derive(Parser)]
+pub struct GetRemarkArguments {
+    #[arg(id = "ID", long, alias = "id")]
+    id: Uuid,
+}
+
+#[derive(Parser)]
+pub struct NewRemarkArguments {
+    #[arg(id = "Essence", long, alias = "essence")]
+    essence: String,
+
+    #[arg(id = "Tag", long, alias = "tag")]
+    tags: Vec<String>,
+}
+
+pub async fn get_remark(engine: &Engine, arguments: GetRemarkArguments) -> anyhow::Result<()> {
+    let GetRemarkArguments { id } = arguments;
+
+    let remark = remarks::get_remark(engine, id).await?;
+
+    println!("Remark: {}", **remark.essence());
+
+    Ok(())
+}
+
+pub async fn new_remark(engine: &Engine, arguments: NewRemarkArguments) -> anyhow::Result<()> {
+    let NewRemarkArguments { essence, tags } = arguments;
+
+    let id = remarks::create_remark(engine, NewRemark { essence, tags }).await?;
+
+    println!("Created remark with id: {}", id);
+
+    Ok(())
+}

@@ -178,17 +178,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "canopus-engine",
- "canopus-protocol",
  "clap",
- "tokio",
-]
-
-[[package]]
-name = "canopus-dataspine"
-version = "0.1.0"
-dependencies = [
- "dotenvy",
- "sqlx",
  "tokio",
  "uuid",
 ]
@@ -220,7 +210,6 @@ dependencies = [
 name = "canopus-repository"
 version = "0.1.0"
 dependencies = [
- "canopus-dataspine",
  "canopus-protocol",
  "chrono",
  "eyre",
@@ -1385,6 +1374,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a007b6936676aa9ab40207cde35daab0a04b823be8ae004368c0793b96a61e0"
 dependencies = [
  "bytes",
+ "chrono",
  "crc",
  "crossbeam-queue",
  "either",
@@ -1462,6 +1452,7 @@ dependencies = [
  "bitflags",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "digest",
  "dotenvy",
@@ -1504,6 +1495,7 @@ dependencies = [
  "base64",
  "bitflags",
  "byteorder",
+ "chrono",
  "crc",
  "dotenvy",
  "etcetera",
@@ -1539,6 +1531,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f85ca71d3a5b24e64e1d08dd8fe36c6c95c339a896cc33068148906784620540"
 dependencies = [
  "atoi",
+ "chrono",
  "flume",
  "futures-channel",
  "futures-core",
@@ -1803,9 +1796,6 @@ name = "uuid"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ced87ca4be083373936a67f8de945faa23b6b42384bd5b64434850802c6dccd0"
-dependencies = [
- "getrandom 0.3.1",
-]
 
 [[package]]
 name = "vcpkg"

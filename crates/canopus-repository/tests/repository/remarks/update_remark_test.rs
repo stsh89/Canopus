@@ -1,5 +1,5 @@
 use crate::support;
-use canopus_dataspine::storage::remarks;
+use canopus_repository::remarks;
 use sqlx::PgPool;
 
 #[sqlx::test(fixtures("remarks"))]

@@ -1,4 +1,4 @@
-pub mod operations;
+pub mod remarks;
 
 use canopus_repository::Repository;
 use sqlx::PgPool;

@@ -1,0 +1,34 @@
+mod remarks;
+
+use canopus_engine::Engine;
+use clap::{command, Parser, Subcommand};
+use remarks::{GetRemarkArguments, NewRemarkArguments};
+
+#[derive(Parser)]
+#[command(version, long_about = None)]
+pub struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+pub enum Commands {
+    #[command(name = "New-Remark", alias = "new-remark")]
+    NewRemark(NewRemarkArguments),
+
+    #[command(name = "Get-Remark", alias = "get-remark")]
+    GetRemark(GetRemarkArguments),
+}
+
+impl Cli {
+    pub async fn execute(self) -> anyhow::Result<()> {
+        let engine = Engine::start().await?;
+
+        match self.command {
+            Commands::NewRemark(args) => remarks::new_remark(&engine, args).await?,
+            Commands::GetRemark(args) => remarks::get_remark(&engine, args).await?,
+        };
+
+        Ok(())
+    }
+}
