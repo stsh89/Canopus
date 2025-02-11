@@ -7,6 +7,12 @@ use clap::Parser;
 use uuid::Uuid;
 
 #[derive(Parser)]
+pub struct DeleteRemarkArguments {
+    #[arg(id = "ID", long, alias = "id")]
+    id: Uuid,
+}
+
+#[derive(Parser)]
 pub struct GetRemarkArguments {
     #[arg(id = "ID", long, alias = "id")]
     id: Uuid,
@@ -19,6 +25,17 @@ pub struct NewRemarkArguments {
 
     #[arg(id = "Tag", long, alias = "tag")]
     tags: Vec<String>,
+}
+
+pub async fn delete_remark(
+    engine: &Engine,
+    arguments: DeleteRemarkArguments,
+) -> anyhow::Result<()> {
+    let DeleteRemarkArguments { id } = arguments;
+
+    remarks::delete_remark(engine, id).await?;
+
+    Ok(())
 }
 
 pub async fn get_remark(engine: &Engine, arguments: GetRemarkArguments) -> anyhow::Result<()> {

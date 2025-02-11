@@ -26,6 +26,10 @@ pub struct NewRemark {
     pub tags: Vec<String>,
 }
 
+pub trait DeleteRemark {
+    fn delete_remark(&self, id: Uuid) -> impl Future<Output = Result<()>>;
+}
+
 pub trait GetRemark {
     fn get_remark(&self, id: Uuid) -> impl Future<Output = Result<Remark>>;
 }
@@ -83,6 +87,12 @@ pub async fn create_remark(new_remark: NewRemark, repository: &impl SaveRemark) 
     };
 
     repository.save_remark(new_remark).await
+}
+
+pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> Result<()> {
+    repository.delete_remark(id).await?;
+
+    Ok(())
 }
 
 pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> Result<Remark> {

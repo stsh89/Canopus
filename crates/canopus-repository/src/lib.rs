@@ -2,7 +2,7 @@ pub mod remarks;
 pub mod remarks_tags;
 pub mod tags;
 
-use canopus_protocol::remarks::{GetRemark, NewRemark, Remark, SaveRemark};
+use canopus_protocol::remarks::{DeleteRemark, GetRemark, NewRemark, Remark, SaveRemark};
 use sqlx::PgTransaction;
 use uuid::Uuid;
 
@@ -16,6 +16,14 @@ type Result<T> = std::result::Result<T, Error>;
 
 pub struct Repository {
     pub pool: sqlx::PgPool,
+}
+
+impl DeleteRemark for Repository {
+    async fn delete_remark(&self, id: Uuid) -> canopus_protocol::Result<()> {
+        delete_remark(self, id).await?;
+
+        Ok(())
+    }
 }
 
 impl GetRemark for Repository {
@@ -32,6 +40,20 @@ impl SaveRemark for Repository {
 
         Ok(id)
     }
+}
+
+async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<()> {
+    remarks::get_remark(&repository.pool, remark_id).await?;
+
+    let mut tx = repository.pool.begin().await?;
+
+    remarks::delete_remark(&mut tx, remark_id).await?;
+    remarks_tags::delete_wasted_remarks_tags(&mut tx).await?;
+    tags::delete_wasted_tags(&mut tx).await?;
+
+    tx.commit().await?;
+
+    Ok(())
 }
 
 async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {

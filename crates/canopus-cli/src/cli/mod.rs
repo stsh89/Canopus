@@ -3,7 +3,7 @@ mod remarks;
 
 use canopus_engine::Engine;
 use clap::{command, Parser, Subcommand};
-use remarks::{GetRemarkArguments, NewRemarkArguments};
+use remarks::{DeleteRemarkArguments, GetRemarkArguments, NewRemarkArguments};
 
 #[derive(Parser)]
 #[command(version, long_about = None)]
@@ -19,6 +19,9 @@ pub enum Commands {
 
     #[command(name = "Get-Remark", alias = "get-remark")]
     GetRemark(GetRemarkArguments),
+
+    #[command(name = "Delete-Remark", alias = "delete-remark")]
+    DeleteRemark(DeleteRemarkArguments),
 }
 
 impl Cli {
@@ -28,6 +31,7 @@ impl Cli {
         match self.command {
             Commands::NewRemark(args) => remarks::new_remark(&engine, args).await?,
             Commands::GetRemark(args) => remarks::get_remark(&engine, args).await?,
+            Commands::DeleteRemark(args) => remarks::delete_remark(&engine, args).await?,
         };
 
         Ok(())

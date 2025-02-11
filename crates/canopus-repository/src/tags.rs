@@ -33,6 +33,25 @@ pub async fn delete_tag(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
     Ok(rec.rows_affected())
 }
 
+pub async fn delete_wasted_tags(tx: &mut PgTransaction<'_>) -> Result<u64, sqlx::Error> {
+    let rec = sqlx::query!(
+        r#"
+WITH wasted_tags AS (
+    SELECT id
+    FROM tags
+    LEFT JOIN remarks_tags ON remarks_tags.tag_id = tags.id
+    WHERE remarks_tags.tag_id IS NULL
+)
+DELETE FROM tags
+WHERE tags.id IN (SELECT wasted_tags.id FROM wasted_tags)
+        "#
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(rec.rows_affected())
+}
+
 pub async fn get_tag(pool: &PgPool, id: Uuid) -> Result<TagRow, sqlx::Error> {
     let row = sqlx::query_as!(TagRow, "SELECT * FROM tags WHERE id = $1", id)
         .fetch_one(pool)

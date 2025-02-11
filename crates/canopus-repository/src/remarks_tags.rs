@@ -20,6 +20,25 @@ VALUES ( $1, $2 )
     Ok(())
 }
 
+pub async fn delete_wasted_remarks_tags(tx: &mut PgTransaction<'_>) -> Result<u64, sqlx::Error> {
+    let rec = sqlx::query!(
+        r#"
+WITH wasted_remarks_tags AS (
+    SELECT remark_id
+    FROM remarks_tags
+    LEFT JOIN remarks ON remarks_tags.remark_id = remarks.id
+    WHERE remarks.id IS NULL
+)
+DELETE FROM remarks_tags
+WHERE remarks_tags.remark_id IN (SELECT wasted_remarks_tags.remark_id FROM wasted_remarks_tags)
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(rec.rows_affected())
+}
+
 pub async fn delete(pool: &PgPool, remark_id: Uuid, tag_id: Uuid) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"

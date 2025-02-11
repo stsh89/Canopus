@@ -27,9 +27,12 @@ RETURNING id
     Ok(rec.id)
 }
 
-pub async fn delete_remark(pool: &PgPool, remark_id: Uuid) -> Result<u64, sqlx::Error> {
+pub async fn delete_remark(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!("DELETE FROM remarks WHERE id = $1", remark_id)
-        .execute(pool)
+        .execute(&mut **tx)
         .await?;
 
     Ok(rec.rows_affected())

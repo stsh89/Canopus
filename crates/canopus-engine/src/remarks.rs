@@ -12,6 +12,14 @@ pub async fn create_remark(engine: &Engine, new_remark: NewRemark) -> Result<Uui
     Ok(id)
 }
 
+pub async fn delete_remark(engine: &Engine, id: Uuid) -> Result<()> {
+    let repository = engine.repository();
+
+    remarks::delete_remark(id, repository).await?;
+
+    Ok(())
+}
+
 pub async fn get_remark(engine: &Engine, id: Uuid) -> Result<Remark> {
     let repository = engine.repository();
 
