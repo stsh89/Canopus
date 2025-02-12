@@ -2,7 +2,10 @@ pub mod remarks;
 pub mod remarks_tags;
 pub mod tags;
 
-use canopus_protocol::remarks::{DeleteRemark, GetRemark, NewRemark, Remark, SaveRemark};
+use canopus_protocol::{
+    remarks::{DeleteRemark, GetRemark, NewRemark, Remark, SaveRemark},
+    tags::{GetTag, Tag},
+};
 use sqlx::PgTransaction;
 use uuid::Uuid;
 
@@ -27,10 +30,18 @@ impl DeleteRemark for Repository {
 }
 
 impl GetRemark for Repository {
-    async fn get_remark(&self, id: Uuid) -> canopus_protocol::Result<Remark> {
-        let remark = get_remark(self, id).await?;
+    async fn get_remark(&self, remark_id: Uuid) -> canopus_protocol::Result<Remark> {
+        let remark = get_remark(self, remark_id).await?;
 
         Ok(remark)
+    }
+}
+
+impl GetTag for Repository {
+    async fn get_tag(&self, tag_id: Uuid) -> canopus_protocol::Result<Tag> {
+        let tag = get_tag(self, tag_id).await?;
+
+        Ok(tag)
     }
 }
 
@@ -57,7 +68,9 @@ async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<()> {
 }
 
 async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
-    let mut remark: Remark = remarks::get_remark(&repository.pool, id).await?.into();
+    let row = remarks::get_remark(&repository.pool, id).await?;
+    let mut remark = Remark::from(row);
+
     let tags = remarks::list_tags(&repository.pool, id)
         .await?
         .into_iter()
@@ -67,6 +80,12 @@ async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
     remark.set_tags(tags);
 
     Ok(remark)
+}
+
+async fn get_tag(repository: &Repository, id: Uuid) -> Result<Tag> {
+    let row = tags::get_tag(&repository.pool, id).await?;
+
+    Ok(row.into())
 }
 
 async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid> {

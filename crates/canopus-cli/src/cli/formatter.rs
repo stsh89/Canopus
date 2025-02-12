@@ -29,6 +29,12 @@ pub fn write_remark(remark_presenter: RemarkPresenter, mut writer: impl Write) -
     Ok(())
 }
 
+pub fn write_tag(tag_presenter: TagPresenter, mut writer: impl Write) -> io::Result<()> {
+    serde_json::to_writer_pretty(&mut writer, &tag_presenter)?;
+
+    Ok(())
+}
+
 impl From<Remark> for RemarkPresenter {
     fn from(value: Remark) -> Self {
         RemarkPresenter {
