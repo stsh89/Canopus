@@ -52,7 +52,7 @@ pub async fn list_tags(pool: &PgPool, remark_id: Uuid) -> sqlx::Result<Vec<TagRo
         r#"
             SELECT tags.* FROM tags
             JOIN remarks_tags ON remarks_tags.tag_id = tags.id AND remarks_tags.remark_id = $1
-            ORDER BY tags.created_at DESC
+            ORDER BY tags.title DESC
         "#,
         remark_id
     )

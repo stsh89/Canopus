@@ -43,7 +43,7 @@ pub async fn get_remark(engine: &Engine, arguments: GetRemarkArguments) -> anyho
 
     let remark = remarks::get_remark(engine, id).await?;
 
-    formatter::write_object(remark, std::io::stdout())?;
+    formatter::write_remark(remark.into(), std::io::stdout())?;
 
     Ok(())
 }
@@ -53,7 +53,7 @@ pub async fn new_remark(engine: &Engine, arguments: NewRemarkArguments) -> anyho
 
     let id = remarks::create_remark(engine, NewRemark { essence, tags }).await?;
 
-    formatter::write_object(id, std::io::stdout())?;
+    get_remark(engine, GetRemarkArguments { id }).await?;
 
     Ok(())
 }

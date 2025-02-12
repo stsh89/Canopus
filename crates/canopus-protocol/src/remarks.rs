@@ -73,6 +73,10 @@ impl Remark {
         self.tags = tags;
     }
 
+    pub fn tags(&self) -> &[Tag] {
+        &self.tags
+    }
+
     pub fn updated_at(&self) -> DateTime<Utc> {
         self.updated_at
     }

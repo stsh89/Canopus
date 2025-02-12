@@ -178,7 +178,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "canopus-engine",
+ "chrono",
  "clap",
+ "serde",
  "serde_json",
  "tokio",
  "uuid",
@@ -244,6 +246,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-targets 0.52.6",
 ]
@@ -1797,6 +1800,9 @@ name = "uuid"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ced87ca4be083373936a67f8de945faa23b6b42384bd5b64434850802c6dccd0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "vcpkg"

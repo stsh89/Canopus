@@ -1,70 +1,59 @@
-use canopus_engine::remarks::Remark;
+use canopus_engine::{remarks::Remark, tags::Tag};
+use chrono::{DateTime, Utc};
+use serde::Serialize;
 use std::io::{self, Write};
 use uuid::Uuid;
 
-pub struct Object {
-    properties: Vec<ObjectProperty>,
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RemarkPresenter {
+    id: Uuid,
+    essence: String,
+    tags: Vec<TagPresenter>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
-struct ObjectProperty {
-    property_name: String,
-    property_value: String,
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TagPresenter {
+    id: Uuid,
+    title: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
-impl Object {
-    fn new(properties: Vec<ObjectProperty>) -> Object {
-        Object { properties }
-    }
-}
-
-pub fn write_object(object: impl Into<Object>, mut writer: impl Write) -> io::Result<()> {
-    let object = object.into();
-
-    if object.properties.is_empty() {
-        return Ok(());
-    }
-
-    let mut json = serde_json::json!({});
-
-    object.properties.into_iter().for_each(|property| {
-        json[property.property_name] = serde_json::Value::from(property.property_value);
-    });
-
-    serde_json::to_writer_pretty(&mut writer, &json)?;
+pub fn write_remark(remark_presenter: RemarkPresenter, mut writer: impl Write) -> io::Result<()> {
+    serde_json::to_writer_pretty(&mut writer, &remark_presenter)?;
 
     Ok(())
 }
 
-impl From<Remark> for Object {
+impl From<Remark> for RemarkPresenter {
     fn from(value: Remark) -> Self {
-        let properties = vec![
-            ObjectProperty {
-                property_name: "ID".to_string(),
-                property_value: value.id().to_string(),
-            },
-            ObjectProperty {
-                property_name: "Essence".to_string(),
-                property_value: value.essence().to_string(),
-            },
-            ObjectProperty {
-                property_name: "CreatedAt".to_string(),
-                property_value: value.created_at().to_string(),
-            },
-            ObjectProperty {
-                property_name: "UpdatedAt".to_string(),
-                property_value: value.updated_at().to_string(),
-            },
-        ];
-
-        Object::new(properties)
+        RemarkPresenter {
+            id: value.id(),
+            essence: value.essence().to_string(),
+            tags: value.tags().iter().map(TagPresenter::from).collect(),
+            created_at: value.created_at(),
+            updated_at: value.updated_at(),
+        }
     }
 }
 
-impl From<Uuid> for Object {
-    fn from(value: Uuid) -> Self {
-        Object::new(vec![ObjectProperty {
-            property_name: "ID".to_string(),
-            property_value: value.to_string(),
-        }])
+impl From<&Tag> for TagPresenter {
+    fn from(value: &Tag) -> Self {
+        TagPresenter {
+            id: value.id(),
+            title: value.title().to_string(),
+            created_at: value.created_at(),
+            updated_at: value.updated_at(),
+        }
+    }
+}
+
+impl From<Tag> for TagPresenter {
+    fn from(value: Tag) -> Self {
+        TagPresenter::from(&value)
     }
 }

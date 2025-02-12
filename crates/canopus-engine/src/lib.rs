@@ -1,4 +1,5 @@
 pub mod remarks;
+pub mod tags;
 
 use canopus_repository::Repository;
 use sqlx::PgPool;
