@@ -1,9 +1,8 @@
+use crate::{tags::TagRow, PaginationToken, DEFAULT_PAGE_SIZE};
 use canopus_protocol::remarks::{Remark, RemarkAttributes};
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;
-
-use crate::tags::TagRow;
 
 pub struct RemarkRow {
     pub id: Uuid,
@@ -12,7 +11,7 @@ pub struct RemarkRow {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn create_remark(tx: &mut PgTransaction<'_>, essence: &str) -> Result<Uuid, sqlx::Error> {
+pub async fn create_remark(tx: &mut PgTransaction<'_>, essence: &str) -> sqlx::Result<Uuid> {
     let rec = sqlx::query!(
         r#"
 INSERT INTO remarks ( essence )
@@ -44,6 +43,37 @@ pub async fn get_remark(pool: &PgPool, remark_id: Uuid) -> Result<RemarkRow, sql
         .await?;
 
     Ok(row)
+}
+
+pub async fn list_remarks(
+    pool: &PgPool,
+    pagination_token: Option<PaginationToken>,
+) -> sqlx::Result<Vec<RemarkRow>> {
+    let pagination_id = pagination_token
+        .as_ref()
+        .map(|token| token.id)
+        .unwrap_or(Uuid::nil());
+    let pagination_created_at = pagination_token
+        .map(|token| token.created_at)
+        .unwrap_or(Utc::now());
+
+    let rows = sqlx::query_as!(
+        RemarkRow,
+        r#"
+            SELECT * FROM remarks
+            WHERE
+                created_at < $1 OR (created_at = $1 AND id > $2)
+            ORDER BY created_at DESC, id ASC
+            LIMIT $3
+        "#,
+        pagination_created_at,
+        pagination_id,
+        DEFAULT_PAGE_SIZE,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
 }
 
 pub async fn list_tags(pool: &PgPool, remark_id: Uuid) -> sqlx::Result<Vec<TagRow>> {

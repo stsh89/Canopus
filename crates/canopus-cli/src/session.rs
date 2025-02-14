@@ -1,0 +1,108 @@
+use serde::{Deserialize, Serialize};
+use std::{
+    fs::{File, OpenOptions},
+    path::Path,
+};
+
+#[derive(Default, Deserialize, Serialize)]
+pub struct Session {
+    pagination_tokens: Option<SessionPaginationTokens>,
+
+    #[serde(skip)]
+    is_changed: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SessionPaginationTokens {
+    remarks_listing: Option<String>,
+}
+
+impl Session {
+    pub fn is_changed(&self) -> bool {
+        self.is_changed
+    }
+
+    pub fn start() -> anyhow::Result<Session> {
+        get_or_initialize_session()
+    }
+
+    pub fn remarks_listing_pagination_token(&self) -> Option<&str> {
+        self.pagination_tokens
+            .as_ref()
+            .and_then(|tokens| tokens.remarks_listing.as_deref())
+    }
+
+    pub fn reset(self) -> anyhow::Result<Self> {
+        let session = Self::default();
+
+        session.save()?;
+
+        Ok(session)
+    }
+
+    pub fn set_remarks_listing_pagination_token(&mut self, token: Option<String>) {
+        self.is_changed = true;
+
+        self.pagination_tokens = Some(SessionPaginationTokens {
+            remarks_listing: token,
+        });
+    }
+
+    pub fn save(&self) -> anyhow::Result<()> {
+        write_session_file(self)
+    }
+}
+
+pub fn get_or_initialize_session() -> anyhow::Result<Session> {
+    let session = get_session()?.unwrap_or_default();
+
+    Ok(session)
+}
+
+fn get_session() -> anyhow::Result<Option<Session>> {
+    use std::io::Read;
+
+    let mut file = read_session_file()?;
+
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+
+    if content.is_empty() {
+        return Ok(None);
+    }
+
+    let session = serde_json::from_str(&content)?;
+
+    Ok(session)
+}
+
+fn read_session_file() -> anyhow::Result<File> {
+    let mut options = OpenOptions::new();
+
+    options.read(true);
+
+    open_session_file(&mut options)
+}
+
+fn write_session_file(session: &Session) -> anyhow::Result<()> {
+    let mut options = OpenOptions::new();
+
+    options.write(true);
+    options.truncate(true);
+
+    let file = open_session_file(&mut options)?;
+
+    serde_json::to_writer(file, session)?;
+
+    Ok(())
+}
+
+fn open_session_file(options: &mut OpenOptions) -> anyhow::Result<File> {
+    if !Path::new("session.json").exists() {
+        File::create("session.json")?;
+    }
+
+    let file = options.open("session.json")?;
+
+    Ok(file)
+}

@@ -8,6 +8,8 @@ fn it_deletes_remark(pool: PgPool) -> sqlx::Result<()> {
 
     let mut tx = pool.begin().await?;
     let count = remarks::delete_remark(&mut tx, id).await?;
+    tx.commit().await?;
+
     assert_eq!(count, 1);
 
     let remark_exists = support::remark_exists(&pool, id).await?;

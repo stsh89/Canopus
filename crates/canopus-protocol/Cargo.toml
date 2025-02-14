@@ -8,6 +8,7 @@ name = "canopus_protocol"
 
 [dependencies]
 chrono = { workspace = true }
+csv = { workspace = true }
 eyre = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }

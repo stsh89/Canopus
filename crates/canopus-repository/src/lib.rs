@@ -2,23 +2,69 @@ pub mod remarks;
 pub mod remarks_tags;
 pub mod tags;
 
+use base64::{
+    alphabet,
+    engine::{general_purpose, GeneralPurpose},
+};
 use canopus_protocol::{
-    remarks::{DeleteRemark, GetRemark, NewRemark, Remark, SaveRemark},
+    remarks::{
+        DeleteRemark, GetRemark, ListRemarks, NewRemark, Remark, RemarksListing,
+        RemarksListingParameters, SaveRemark,
+    },
     tags::{GetTag, Tag},
 };
+use chrono::{DateTime, Utc};
+use remarks::RemarkRow;
+use serde::{Deserialize, Serialize};
 use sqlx::PgTransaction;
 use uuid::Uuid;
+
+const DEFAULT_PAGE_SIZE: i64 = 25;
+const URL_SAFE_NO_PAD_ENGINE: GeneralPurpose =
+    GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 #[derive(thiserror::Error, Debug)]
 enum Error {
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
+
+    #[error(transparent)]
+    Serde(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    Base64Decode(#[from] base64::DecodeError),
 }
 
 type Result<T> = std::result::Result<T, Error>;
 
 pub struct Repository {
     pub pool: sqlx::PgPool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PaginationToken {
+    id: Uuid,
+    created_at: DateTime<Utc>,
+}
+
+impl PaginationToken {
+    fn from_string(token: String) -> Result<Self> {
+        use base64::Engine;
+
+        let json = URL_SAFE_NO_PAD_ENGINE.decode(token)?;
+
+        let token = serde_json::from_slice(&json)?;
+
+        Ok(token)
+    }
+
+    fn to_string(&self) -> Result<String> {
+        use base64::Engine;
+
+        let json = serde_json::to_string(&self)?;
+
+        Ok(URL_SAFE_NO_PAD_ENGINE.encode(json))
+    }
 }
 
 impl DeleteRemark for Repository {
@@ -50,6 +96,17 @@ impl SaveRemark for Repository {
         let id = save_remark(self, new_remark).await?;
 
         Ok(id)
+    }
+}
+
+impl ListRemarks for Repository {
+    async fn list_remarks(
+        &self,
+        parameters: RemarksListingParameters,
+    ) -> canopus_protocol::Result<RemarksListing> {
+        let listing = list_remarks(self, parameters).await?;
+
+        Ok(listing)
     }
 }
 
@@ -86,6 +143,39 @@ async fn get_tag(repository: &Repository, id: Uuid) -> Result<Tag> {
     let row = tags::get_tag(&repository.pool, id).await?;
 
     Ok(row.into())
+}
+
+async fn list_remarks(
+    repository: &Repository,
+    parameters: RemarksListingParameters,
+) -> Result<RemarksListing> {
+    let RemarksListingParameters { pagination_token } = parameters;
+
+    let pagination_token = pagination_token
+        .map(PaginationToken::from_string)
+        .transpose()?;
+
+    let rows = remarks::list_remarks(&repository.pool, pagination_token).await?;
+
+    let pagination_token = build_pagination_token(&rows)
+        .map(|token| token.to_string())
+        .transpose()?;
+
+    Ok(RemarksListing {
+        pagination_token,
+        remarks: rows.into_iter().map(Into::into).collect(),
+    })
+}
+
+fn build_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
+    if rows.len() < DEFAULT_PAGE_SIZE as usize {
+        return None;
+    }
+
+    rows.last().map(|row| PaginationToken {
+        id: row.id,
+        created_at: row.created_at,
+    })
 }
 
 async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid> {

@@ -26,6 +26,16 @@ pub struct NewRemark {
     pub tags: Vec<String>,
 }
 
+pub struct RemarksListing {
+    pub remarks: Vec<Remark>,
+    pub pagination_token: Option<String>,
+}
+
+#[derive(Default)]
+pub struct RemarksListingParameters {
+    pub pagination_token: Option<String>,
+}
+
 pub trait DeleteRemark {
     fn delete_remark(&self, id: Uuid) -> impl Future<Output = Result<()>>;
 }
@@ -36,6 +46,13 @@ pub trait GetRemark {
 
 pub trait SaveRemark {
     fn save_remark(&self, new_remark: NewRemark) -> impl Future<Output = Result<Uuid>>;
+}
+
+pub trait ListRemarks {
+    fn list_remarks(
+        &self,
+        listing_parameters: RemarksListingParameters,
+    ) -> impl Future<Output = Result<RemarksListing>>;
 }
 
 impl Remark {
@@ -101,6 +118,13 @@ pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> Result<(
 
 pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> Result<Remark> {
     repository.get_remark(id).await
+}
+
+pub async fn list_remarks(
+    parameters: RemarksListingParameters,
+    repository: &impl ListRemarks,
+) -> Result<RemarksListing> {
+    repository.list_remarks(parameters).await
 }
 
 fn sanitize_essence(essence: String) -> String {

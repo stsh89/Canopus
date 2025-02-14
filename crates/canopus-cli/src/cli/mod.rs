@@ -2,9 +2,12 @@ mod formatter;
 mod remarks;
 mod tags;
 
+use crate::session::Session;
 use canopus_engine::Engine;
 use clap::{command, Parser, Subcommand};
-use remarks::{DeleteRemarkArguments, GetRemarkArguments, NewRemarkArguments};
+use remarks::{
+    DeleteRemarkArguments, GetRemarkArguments, ListRemarksArguments, NewRemarkArguments,
+};
 use tags::GetTagArguments;
 
 #[derive(Parser)]
@@ -16,8 +19,8 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    #[command(name = "New-Remark", alias = "new-remark")]
-    NewRemark(NewRemarkArguments),
+    #[command(name = "Delete-Remark", alias = "delete-remark")]
+    DeleteRemark(DeleteRemarkArguments),
 
     #[command(name = "Get-Remark", alias = "get-remark")]
     GetRemark(GetRemarkArguments),
@@ -25,20 +28,35 @@ pub enum Commands {
     #[command(name = "Get-Tag", alias = "get-tag")]
     GetTag(GetTagArguments),
 
-    #[command(name = "Delete-Remark", alias = "delete-remark")]
-    DeleteRemark(DeleteRemarkArguments),
+    #[command(name = "List-Remarks", alias = "list-remarks")]
+    ListRemarks(ListRemarksArguments),
+
+    #[command(name = "New-Remark", alias = "new-remark")]
+    NewRemark(NewRemarkArguments),
+
+    #[command(name = "Reset-Session", alias = "reset-session")]
+    ResetSession,
 }
 
 impl Cli {
     pub async fn execute(self) -> anyhow::Result<()> {
         let engine = Engine::start().await?;
+        let mut session = Session::start()?;
 
         match self.command {
             Commands::DeleteRemark(args) => remarks::delete_remark(&engine, args).await?,
             Commands::GetRemark(args) => remarks::get_remark(&engine, args).await?,
             Commands::GetTag(args) => tags::get_tag(&engine, args).await?,
             Commands::NewRemark(args) => remarks::new_remark(&engine, args).await?,
+            Commands::ListRemarks(args) => {
+                remarks::list_remarks(&engine, &mut session, args).await?
+            }
+            Commands::ResetSession => session = session.reset()?,
         };
+
+        if session.is_changed() {
+            session.save()?;
+        }
 
         Ok(())
     }

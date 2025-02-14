@@ -1,6 +1,6 @@
-use crate::cli::formatter;
+use crate::{cli::formatter, session::Session};
 use canopus_engine::{
-    remarks::{self, NewRemark},
+    remarks::{self, NewRemark, RemarksListingParameters},
     Engine,
 };
 use clap::Parser;
@@ -16,6 +16,12 @@ pub struct DeleteRemarkArguments {
 pub struct GetRemarkArguments {
     #[arg(id = "ID", long, alias = "id")]
     id: Uuid,
+}
+
+#[derive(Parser)]
+pub struct ListRemarksArguments {
+    #[arg(id = "LoadNextPage", long, alias = "loadnextpage")]
+    load_next_page: bool,
 }
 
 #[derive(Parser)]
@@ -54,6 +60,34 @@ pub async fn new_remark(engine: &Engine, arguments: NewRemarkArguments) -> anyho
     let id = remarks::create_remark(engine, NewRemark { essence, tags }).await?;
 
     get_remark(engine, GetRemarkArguments { id }).await?;
+
+    Ok(())
+}
+
+pub async fn list_remarks(
+    engine: &Engine,
+    session: &mut Session,
+    arguments: ListRemarksArguments,
+) -> anyhow::Result<()> {
+    let ListRemarksArguments { load_next_page } = arguments;
+
+    let mut parameters = RemarksListingParameters::default();
+
+    if let Some(token) = session.remarks_listing_pagination_token() {
+        if load_next_page {
+            parameters.pagination_token = Some(token.to_string());
+        }
+    } else if load_next_page {
+        return Ok(());
+    };
+
+    let listing = remarks::list_remarks(engine, parameters).await?;
+
+    let remarks = listing.remarks.into_iter().map(Into::into).collect();
+
+    formatter::write_remarks_table(remarks, std::io::stdout())?;
+
+    session.set_remarks_listing_pagination_token(listing.pagination_token);
 
     Ok(())
 }
