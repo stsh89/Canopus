@@ -1,4 +1,4 @@
-use super::formatter;
+use crate::formatter;
 use canopus_engine::{tags, Engine};
 use clap::Parser;
 use uuid::Uuid;

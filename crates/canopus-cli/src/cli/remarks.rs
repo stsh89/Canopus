@@ -1,4 +1,4 @@
-use crate::{cli::formatter, session::Session};
+use crate::{formatter, session::Session};
 use canopus_engine::{
     remarks::{self, NewRemark, RemarksListingParameters},
     Engine,

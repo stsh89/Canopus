@@ -1,4 +1,3 @@
-mod formatter;
 mod remarks;
 mod tags;
 
