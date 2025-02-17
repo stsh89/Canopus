@@ -1,4 +1,4 @@
-use sqlx::{PgPool, PgTransaction};
+use sqlx::PgTransaction;
 use uuid::Uuid;
 
 pub async fn create(
@@ -20,6 +20,21 @@ VALUES ( $1, $2 )
     Ok(())
 }
 
+pub async fn remark_tag_exists(tx: &mut PgTransaction<'_>, remark_id: Uuid, tag_id: Uuid) -> sqlx::Result<bool> {
+    let exists = sqlx::query_scalar!(
+        r#"
+SELECT EXISTS(
+    SELECT 1 FROM remarks_tags WHERE remark_id = $1 AND tag_id = $2
+) as "exists!"
+        "#,
+        remark_id,
+        tag_id
+    ).fetch_one(&mut **tx)
+    .await?;
+
+    Ok(exists)
+}
+
 pub async fn delete_wasted_remarks_tags(tx: &mut PgTransaction<'_>) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
@@ -39,7 +54,11 @@ WHERE remarks_tags.remark_id IN (SELECT wasted_remarks_tags.remark_id FROM waste
     Ok(rec.rows_affected())
 }
 
-pub async fn delete(pool: &PgPool, remark_id: Uuid, tag_id: Uuid) -> Result<u64, sqlx::Error> {
+pub async fn delete(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+    tag_id: Uuid,
+) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 DELETE FROM remarks_tags
@@ -48,7 +67,7 @@ WHERE remark_id = $1 AND tag_id = $2
         remark_id,
         tag_id
     )
-    .execute(pool)
+    .execute(&mut **tx)
     .await?;
 
     Ok(rec.rows_affected())

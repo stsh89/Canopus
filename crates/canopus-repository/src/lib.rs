@@ -8,8 +8,8 @@ use base64::{
 };
 use canopus_protocol::{
     remarks::{
-        DeleteRemark, GetRemark, ListRemarks, NewRemark, Remark, RemarksListing,
-        RemarksListingParameters, SaveRemark,
+        DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, Remark, RemarkUpdates,
+        RemarksListing, RemarksListingParameters, UpdateRemark,
     },
     tags::{GetTag, Tag},
 };
@@ -91,8 +91,8 @@ impl GetTag for Repository {
     }
 }
 
-impl SaveRemark for Repository {
-    async fn save_remark(&self, new_remark: NewRemark) -> canopus_protocol::Result<Uuid> {
+impl InsertRemark for Repository {
+    async fn insert_remark(&self, new_remark: NewRemark) -> canopus_protocol::Result<Uuid> {
         let id = save_remark(self, new_remark).await?;
 
         Ok(id)
@@ -110,6 +110,37 @@ impl ListRemarks for Repository {
     }
 }
 
+impl UpdateRemark for Repository {
+    async fn update_remark(&self, parameters: RemarkUpdates) -> canopus_protocol::Result<()> {
+        update_remark(self, parameters).await?;
+
+        Ok(())
+    }
+}
+
+async fn assign_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<()> {
+    for tag in tags {
+        let tag_id = find_or_create_tag(tx, &tag).await?;
+
+        if !remarks_tags::remark_tag_exists(tx, remark_id, tag_id).await? {
+            remarks_tags::create(tx, remark_id, tag_id).await?;
+        }
+    }
+
+    Ok(())
+}
+
+fn build_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
+    if rows.len() < DEFAULT_PAGE_SIZE as usize {
+        return None;
+    }
+
+    rows.last().map(|row| PaginationToken {
+        id: row.id,
+        created_at: row.created_at,
+    })
+}
+
 async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<()> {
     remarks::get_remark(&repository.pool, remark_id).await?;
 
@@ -122,6 +153,14 @@ async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<()> {
     tx.commit().await?;
 
     Ok(())
+}
+
+async fn find_or_create_tag(tx: &mut PgTransaction<'_>, title: &str) -> sqlx::Result<uuid::Uuid> {
+    if let Some(id) = tags::find(tx, title).await? {
+        return Ok(id);
+    };
+
+    tags::create_tag(tx, title).await
 }
 
 async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
@@ -167,48 +206,61 @@ async fn list_remarks(
     })
 }
 
-fn build_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
-    if rows.len() < DEFAULT_PAGE_SIZE as usize {
-        return None;
+async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> Result<()> {
+    if parameters.is_empty() {
+        return Ok(());
     }
 
-    rows.last().map(|row| PaginationToken {
-        id: row.id,
-        created_at: row.created_at,
-    })
+    let RemarkUpdates {
+        id,
+        essence,
+        add_tags,
+        remove_tags,
+    } = parameters;
+
+    let mut tx = repository.pool.begin().await?;
+
+    assign_tags(&mut tx, id, add_tags).await?;
+
+    if let Some(essence) = essence {
+        remarks::update_remark(&mut tx, id, &essence).await?;
+    }
+
+    unset_tags(&mut tx, id, remove_tags).await?;
+    tags::delete_wasted_tags(&mut tx).await?;
+
+    tx.commit().await?;
+
+    Ok(())
 }
 
 async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid> {
+    let NewRemark { essence, tags } = new_remark;
+
     let mut tx = repository.pool.begin().await?;
-    let id = create_remark(&mut tx, new_remark).await?;
+
+    let remark_id = remarks::create_remark(&mut tx, &essence).await?;
+    assign_tags(&mut tx, remark_id, tags).await?;
+
     tx.commit().await?;
 
-    Ok(id)
+    Ok(remark_id)
+}
+
+async fn unset_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<()> {
+    for tag in tags {
+        let Some(tag_id) = tags::find(tx, &tag).await? else {
+            continue;
+        };
+
+        remarks_tags::delete(tx, remark_id, tag_id).await?;
+    }
+
+    Ok(())
 }
 
 impl From<Error> for canopus_protocol::Error {
     fn from(error: Error) -> Self {
         canopus_protocol::Error::Repository(error.into())
     }
-}
-
-async fn create_remark(tx: &mut PgTransaction<'_>, new_remark: NewRemark) -> Result<uuid::Uuid> {
-    let NewRemark { essence, tags } = new_remark;
-
-    let remark_id = remarks::create_remark(tx, &essence).await?;
-
-    for tag in tags {
-        let tag_id = find_or_create_tag(tx, &tag).await?;
-        remarks_tags::create(tx, remark_id, tag_id).await?;
-    }
-
-    Ok(remark_id)
-}
-
-async fn find_or_create_tag(tx: &mut PgTransaction<'_>, title: &str) -> sqlx::Result<uuid::Uuid> {
-    if let Some(id) = tags::find(tx, title).await? {
-        return Ok(id);
-    };
-
-    tags::create_tag(tx, title).await
 }

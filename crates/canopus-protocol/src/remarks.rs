@@ -31,6 +31,19 @@ pub struct RemarksListing {
     pub pagination_token: Option<String>,
 }
 
+pub struct RemarkUpdates {
+    pub id: Uuid,
+    pub essence: Option<String>,
+    pub add_tags: Vec<String>,
+    pub remove_tags: Vec<String>,
+}
+
+impl RemarkUpdates {
+    pub fn is_empty(&self) -> bool {
+        self.add_tags.is_empty() && self.remove_tags.is_empty() && self.essence.is_none()
+    }
+}
+
 #[derive(Default)]
 pub struct RemarksListingParameters {
     pub pagination_token: Option<String>,
@@ -44,8 +57,12 @@ pub trait GetRemark {
     fn get_remark(&self, id: Uuid) -> impl Future<Output = Result<Remark>>;
 }
 
-pub trait SaveRemark {
-    fn save_remark(&self, new_remark: NewRemark) -> impl Future<Output = Result<Uuid>>;
+pub trait InsertRemark {
+    fn insert_remark(&self, new_remark: NewRemark) -> impl Future<Output = Result<Uuid>>;
+}
+
+pub trait UpdateRemark {
+    fn update_remark(&self, parameters: RemarkUpdates) -> impl Future<Output = Result<()>>;
 }
 
 pub trait ListRemarks {
@@ -99,7 +116,7 @@ impl Remark {
     }
 }
 
-pub async fn create_remark(new_remark: NewRemark, repository: &impl SaveRemark) -> Result<Uuid> {
+pub async fn create_remark(new_remark: NewRemark, repository: &impl InsertRemark) -> Result<Uuid> {
     let NewRemark { essence, tags } = new_remark;
 
     let new_remark = NewRemark {
@@ -107,7 +124,7 @@ pub async fn create_remark(new_remark: NewRemark, repository: &impl SaveRemark) 
         tags: tags.into_iter().map(sanitize_tag).collect(),
     };
 
-    repository.save_remark(new_remark).await
+    repository.insert_remark(new_remark).await
 }
 
 pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> Result<()> {
@@ -125,6 +142,13 @@ pub async fn list_remarks(
     repository: &impl ListRemarks,
 ) -> Result<RemarksListing> {
     repository.list_remarks(parameters).await
+}
+
+pub async fn update_remark(
+    parameters: RemarkUpdates,
+    repository: &impl UpdateRemark,
+) -> Result<()> {
+    repository.update_remark(parameters).await
 }
 
 fn sanitize_essence(essence: String) -> String {

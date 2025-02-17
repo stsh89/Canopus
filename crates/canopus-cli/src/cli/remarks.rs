@@ -1,6 +1,6 @@
 use crate::{formatter, session::Session};
 use canopus_engine::{
-    remarks::{self, NewRemark, RemarksListingParameters},
+    remarks::{self, NewRemark, RemarkUpdates, RemarksListingParameters},
     Engine,
 };
 use clap::Parser;
@@ -22,6 +22,21 @@ pub struct GetRemarkArguments {
 pub struct ListRemarksArguments {
     #[arg(id = "LoadNextPage", long, alias = "loadnextpage")]
     load_next_page: bool,
+}
+
+#[derive(Parser)]
+pub struct UpdateRemarkArguments {
+    #[arg(id = "ID", long, alias = "id")]
+    id: Uuid,
+
+    #[arg(id = "Essence", long, alias = "essence")]
+    essence: Option<String>,
+
+    #[arg(id = "AddTag", long, alias = "addtag")]
+    add_tags: Vec<String>,
+
+    #[arg(id = "RemoveTag", long, alias = "removetag")]
+    remove_tags: Vec<String>,
 }
 
 #[derive(Parser)]
@@ -59,7 +74,9 @@ pub async fn new_remark(engine: &Engine, arguments: NewRemarkArguments) -> anyho
 
     let id = remarks::create_remark(engine, NewRemark { essence, tags }).await?;
 
-    get_remark(engine, GetRemarkArguments { id }).await?;
+    let remark = remarks::get_remark(engine, id).await?;
+
+    formatter::write_remark(remark.into(), std::io::stdout())?;
 
     Ok(())
 }
@@ -73,13 +90,13 @@ pub async fn list_remarks(
 
     let mut parameters = RemarksListingParameters::default();
 
-    if let Some(token) = session.remarks_listing_pagination_token() {
-        if load_next_page {
-            parameters.pagination_token = Some(token.to_string());
-        }
-    } else if load_next_page {
-        return Ok(());
-    };
+    if load_next_page {
+        let Some(token) = session.remarks_listing_pagination_token() else {
+            return Ok(());
+        };
+
+        parameters.pagination_token = Some(token.to_string());
+    }
 
     let listing = remarks::list_remarks(engine, parameters).await?;
 
@@ -88,6 +105,35 @@ pub async fn list_remarks(
     formatter::write_remarks_table(remarks, std::io::stdout())?;
 
     session.set_remarks_listing_pagination_token(listing.pagination_token);
+
+    Ok(())
+}
+
+pub async fn update_remark(
+    engine: &Engine,
+    arguments: UpdateRemarkArguments,
+) -> anyhow::Result<()> {
+    let UpdateRemarkArguments {
+        id,
+        essence,
+        add_tags,
+        remove_tags,
+    } = arguments;
+
+    remarks::update_remark(
+        engine,
+        RemarkUpdates {
+            id,
+            essence,
+            add_tags,
+            remove_tags,
+        },
+    )
+    .await?;
+
+    let remark = remarks::get_remark(engine, id).await?;
+
+    formatter::write_remark(remark.into(), std::io::stdout())?;
 
     Ok(())
 }

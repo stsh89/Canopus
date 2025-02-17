@@ -9,7 +9,9 @@ async fn it_updates_remark(pool: PgPool) -> sqlx::Result<()> {
     let new_essence = "No great thing is created suddenly";
     assert!(essence_was != new_essence);
 
-    remarks::update(&pool, id, new_essence).await?;
+    let mut tx = pool.begin().await?;
+    remarks::update_remark(&mut tx, id, new_essence).await?;
+    tx.commit().await?;
 
     let essence = support::get_remark_essence(&pool, id).await?;
     assert!(essence == new_essence);

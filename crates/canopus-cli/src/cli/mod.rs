@@ -6,6 +6,7 @@ use canopus_engine::Engine;
 use clap::{command, Parser, Subcommand};
 use remarks::{
     DeleteRemarkArguments, GetRemarkArguments, ListRemarksArguments, NewRemarkArguments,
+    UpdateRemarkArguments,
 };
 use tags::GetTagArguments;
 
@@ -35,6 +36,9 @@ pub enum Commands {
 
     #[command(name = "Reset-Session", alias = "reset-session")]
     ResetSession,
+
+    #[command(name = "Update-Remark", alias = "update-remark")]
+    UpdateRemark(UpdateRemarkArguments),
 }
 
 impl Cli {
@@ -51,6 +55,7 @@ impl Cli {
                 remarks::list_remarks(&engine, &mut session, args).await?
             }
             Commands::ResetSession => session = session.reset()?,
+            Commands::UpdateRemark(args) => remarks::update_remark(&engine, args).await?,
         };
 
         if session.is_changed() {

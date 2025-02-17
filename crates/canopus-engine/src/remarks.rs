@@ -1,4 +1,6 @@
-pub use canopus_protocol::remarks::{NewRemark, Remark, RemarksListing, RemarksListingParameters};
+pub use canopus_protocol::remarks::{
+    NewRemark, Remark, RemarkUpdates, RemarksListing, RemarksListingParameters,
+};
 
 use crate::{Engine, Result};
 use canopus_protocol::remarks;
@@ -37,4 +39,12 @@ pub async fn list_remarks(
     let remarks = remarks::list_remarks(parameters, repository).await?;
 
     Ok(remarks)
+}
+
+pub async fn update_remark(engine: &Engine, parameters: RemarkUpdates) -> Result<()> {
+    let repository = engine.repository();
+
+    remarks::update_remark(parameters, repository).await?;
+
+    Ok(())
 }

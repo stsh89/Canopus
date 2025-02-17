@@ -92,7 +92,11 @@ pub async fn list_tags(pool: &PgPool, remark_id: Uuid) -> sqlx::Result<Vec<TagRo
     Ok(rows)
 }
 
-pub async fn update(pool: &PgPool, id: Uuid, essence: &str) -> Result<u64, sqlx::Error> {
+pub async fn update_remark(
+    tx: &mut PgTransaction<'_>,
+    id: Uuid,
+    essence: &str,
+) -> Result<u64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
 UPDATE remarks
@@ -105,7 +109,7 @@ WHERE
         id,
         essence
     )
-    .execute(pool)
+    .execute(&mut **tx)
     .await?;
 
     Ok(rec.rows_affected())
