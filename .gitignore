@@ -1,5 +1,5 @@
 .env
 /docker/postgres.env
-/pg_dumps
+/pg_dumps/*.bak
 /target
 session.json
