@@ -1,4 +1,5 @@
-/target
-/docker/postgres.env
 .env
+/docker/postgres.env
+/pg_dumps
+/target
 session.json
