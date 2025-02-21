@@ -36,7 +36,8 @@ Create database dump:
 
 ```pwsh
 docker compose --file .\docker\compose.yaml exec db `
-sh -c 'pg_dump -U $POSTGRES_USER --quote-all-identifiers --format=custom canopus_dev' > .\pg_dumps\canopus_dev.bak
+sh -c 'pg_dump -U $POSTGRES_USER --quote-all-identifiers --format=custom canopus_dev' `
+> ".\pg_dumps\canopus_dev_$(Get-Date -Format 'yyyyMMddHHmmss').bak"
 ```
 
 Remove db_data volume (ALERT, following command will remove all volumes):
@@ -57,10 +58,10 @@ docker compose --file .\docker\compose.yaml up -d
 sqlx database create
 ```
 
-Restore database dump:
+Restore database dump (NOTICE, set your file timestamp):
 
 ```pwsh
-Get-Content .\pg_dumps\canopus_dev.bak -AsByteStream | `
+Get-Content .\pg_dumps\canopus_dev_{TIMESTAMP}.bak -AsByteStream | `
 docker compose --file .\docker\compose.yaml exec -T db `
 sh -c 'pg_restore -U $POSTGRES_USER -d canopus_dev'
 ```
