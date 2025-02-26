@@ -72,4 +72,39 @@ switch ($CommandName) {
 
         Invoke-Expression $new_command
     }
+
+    "update" {
+        $id = Read-Host 'Remark ID'
+        $command = $base_command + "Update-Remark --ID $id"
+
+        $essence = Read-Host 'Remark essence'
+
+        if ($essence -ne "") {
+            $command = $command + " --Essence $essence"
+        }
+
+        do {
+            $tag = Read-Host 'Add remark tag'
+
+            if ($tag -ne "") {
+                $command = $command + " --AddTag $tag"
+            } else {
+                break
+            }
+        } while ($true)
+
+        do {
+            $tag = Read-Host 'Delete remark tag'
+
+            if ($tag -ne "") {
+                $command = $command + " --RemoveTag $tag"
+            } else {
+                break
+            }
+        } while ($true)
+
+        $new_command = $command + " | ConvertFrom-Json"
+
+        Invoke-Expression $new_command
+    }
 }
