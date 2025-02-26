@@ -25,6 +25,15 @@ pub struct RemarkRowPresenter {
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct TagRowPresenter {
+    id: Uuid,
+    title: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct TagPresenter {
     id: Uuid,
     title: String,
@@ -42,6 +51,20 @@ pub fn write_remarks_table(
     rows: Vec<RemarkRowPresenter>,
     mut writer: impl Write,
 ) -> io::Result<()> {
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(true)
+        .from_writer(&mut writer);
+
+    for row in rows {
+        writer.serialize(row)?;
+    }
+
+    writer.flush()?;
+
+    Ok(())
+}
+
+pub fn write_tags_table(rows: Vec<TagRowPresenter>, mut writer: impl Write) -> io::Result<()> {
     let mut writer = csv::WriterBuilder::new()
         .has_headers(true)
         .from_writer(&mut writer);
@@ -94,6 +117,17 @@ impl From<Remark> for RemarkRowPresenter {
 impl From<&Tag> for TagPresenter {
     fn from(value: &Tag) -> Self {
         TagPresenter {
+            id: value.id(),
+            title: value.title().to_string(),
+            created_at: value.created_at(),
+            updated_at: value.updated_at(),
+        }
+    }
+}
+
+impl From<Tag> for TagRowPresenter {
+    fn from(value: Tag) -> Self {
+        TagRowPresenter {
             id: value.id(),
             title: value.title().to_string(),
             created_at: value.created_at(),

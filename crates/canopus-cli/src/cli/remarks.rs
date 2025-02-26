@@ -1,7 +1,7 @@
 use crate::{formatter, session::Session};
 use canopus_engine::{
-    remarks::{self, NewRemark, RemarkUpdates, RemarksListingParameters},
     Engine,
+    remarks::{self, NewRemark, RemarkUpdates, RemarksListingParameters},
 };
 use clap::Parser;
 use uuid::Uuid;
@@ -91,7 +91,7 @@ pub async fn list_remarks(
     let mut parameters = RemarksListingParameters::default();
 
     if load_next_page {
-        let Some(token) = session.remarks_listing_pagination_token() else {
+        let Some(token) = session.remarks_pagination_token() else {
             return Ok(());
         };
 
@@ -104,7 +104,11 @@ pub async fn list_remarks(
 
     formatter::write_remarks_table(remarks, std::io::stdout())?;
 
-    session.set_remarks_listing_pagination_token(listing.pagination_token);
+    if let Some(token) = listing.pagination_token {
+        session.set_remarks_pagination_token(token);
+    } else {
+        session.clear_remarks_pagination_token();
+    }
 
     Ok(())
 }

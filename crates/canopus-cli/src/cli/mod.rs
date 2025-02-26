@@ -3,12 +3,12 @@ mod tags;
 
 use crate::session::Session;
 use canopus_engine::Engine;
-use clap::{command, Parser, Subcommand};
+use clap::{Parser, Subcommand, command};
 use remarks::{
     DeleteRemarkArguments, GetRemarkArguments, ListRemarksArguments, NewRemarkArguments,
     UpdateRemarkArguments,
 };
-use tags::GetTagArguments;
+use tags::{GetTagArguments, ListTagsArguments};
 
 #[derive(Parser)]
 #[command(version, long_about = None)]
@@ -30,6 +30,9 @@ pub enum Commands {
 
     #[command(name = "List-Remarks", alias = "list-remarks")]
     ListRemarks(ListRemarksArguments),
+
+    #[command(name = "List-Tags", alias = "list-tags")]
+    ListTags(ListTagsArguments),
 
     #[command(name = "New-Remark", alias = "new-remark")]
     NewRemark(NewRemarkArguments),
@@ -54,6 +57,7 @@ impl Cli {
             Commands::ListRemarks(args) => {
                 remarks::list_remarks(&engine, &mut session, args).await?
             }
+            Commands::ListTags(args) => tags::list_tags(&engine, &mut session, args).await?,
             Commands::ResetSession => session = session.reset()?,
             Commands::UpdateRemark(args) => remarks::update_remark(&engine, args).await?,
         };

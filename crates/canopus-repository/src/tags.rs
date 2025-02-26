@@ -3,6 +3,8 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;
 
+use crate::{DEFAULT_PAGE_SIZE, PaginationToken};
+
 pub struct TagRow {
     pub id: Uuid,
     pub title: String,
@@ -66,6 +68,38 @@ pub async fn find(tx: &mut PgTransaction<'_>, title: &str) -> Result<Option<Uuid
         .await?;
 
     Ok(rec)
+}
+
+pub async fn list_tags(
+    pool: &PgPool,
+    pagination_token: Option<PaginationToken>,
+) -> sqlx::Result<Vec<TagRow>> {
+    let pagination_id = pagination_token
+        .as_ref()
+        .map(|token| token.id)
+        .unwrap_or(Uuid::nil());
+
+    let pagination_created_at = pagination_token
+        .map(|token| token.created_at)
+        .unwrap_or(Utc::now());
+
+    let rows = sqlx::query_as!(
+        TagRow,
+        r#"
+            SELECT * FROM tags
+            WHERE
+                created_at < $1 OR (created_at = $1 AND id > $2)
+            ORDER BY created_at DESC, id ASC
+            LIMIT $3
+        "#,
+        pagination_created_at,
+        pagination_id,
+        DEFAULT_PAGE_SIZE,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
 }
 
 pub async fn update(pool: &PgPool, id: Uuid, title: &str) -> Result<u64, sqlx::Error> {

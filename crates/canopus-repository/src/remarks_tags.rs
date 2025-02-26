@@ -20,7 +20,11 @@ VALUES ( $1, $2 )
     Ok(())
 }
 
-pub async fn remark_tag_exists(tx: &mut PgTransaction<'_>, remark_id: Uuid, tag_id: Uuid) -> sqlx::Result<bool> {
+pub async fn remark_tag_exists(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+    tag_id: Uuid,
+) -> sqlx::Result<bool> {
     let exists = sqlx::query_scalar!(
         r#"
 SELECT EXISTS(
@@ -29,7 +33,8 @@ SELECT EXISTS(
         "#,
         remark_id,
         tag_id
-    ).fetch_one(&mut **tx)
+    )
+    .fetch_one(&mut **tx)
     .await?;
 
     Ok(exists)

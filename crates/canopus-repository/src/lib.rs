@@ -4,19 +4,20 @@ pub mod tags;
 
 use base64::{
     alphabet,
-    engine::{general_purpose, GeneralPurpose},
+    engine::{GeneralPurpose, general_purpose},
 };
 use canopus_protocol::{
     remarks::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, Remark, RemarkUpdates,
         RemarksListing, RemarksListingParameters, UpdateRemark,
     },
-    tags::{GetTag, Tag},
+    tags::{GetTag, ListTags, Tag, TagsListing, TagsListingParameters},
 };
 use chrono::{DateTime, Utc};
 use remarks::RemarkRow;
 use serde::{Deserialize, Serialize};
 use sqlx::PgTransaction;
+use tags::TagRow;
 use uuid::Uuid;
 
 const DEFAULT_PAGE_SIZE: i64 = 25;
@@ -110,6 +111,17 @@ impl ListRemarks for Repository {
     }
 }
 
+impl ListTags for Repository {
+    async fn list_tags(
+        &self,
+        parameters: TagsListingParameters,
+    ) -> canopus_protocol::Result<TagsListing> {
+        let listing = list_tags(self, parameters).await?;
+
+        Ok(listing)
+    }
+}
+
 impl UpdateRemark for Repository {
     async fn update_remark(&self, parameters: RemarkUpdates) -> canopus_protocol::Result<()> {
         update_remark(self, parameters).await?;
@@ -130,7 +142,18 @@ async fn assign_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<Stri
     Ok(())
 }
 
-fn build_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
+fn build_remarks_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
+    if rows.len() < DEFAULT_PAGE_SIZE as usize {
+        return None;
+    }
+
+    rows.last().map(|row| PaginationToken {
+        id: row.id,
+        created_at: row.created_at,
+    })
+}
+
+fn build_tags_pagination_token(rows: &[TagRow]) -> Option<PaginationToken> {
     if rows.len() < DEFAULT_PAGE_SIZE as usize {
         return None;
     }
@@ -196,13 +219,35 @@ async fn list_remarks(
 
     let rows = remarks::list_remarks(&repository.pool, pagination_token).await?;
 
-    let pagination_token = build_pagination_token(&rows)
+    let pagination_token = build_remarks_pagination_token(&rows)
         .map(|token| token.to_string())
         .transpose()?;
 
     Ok(RemarksListing {
         pagination_token,
         remarks: rows.into_iter().map(Into::into).collect(),
+    })
+}
+
+async fn list_tags(
+    repository: &Repository,
+    parameters: TagsListingParameters,
+) -> Result<TagsListing> {
+    let TagsListingParameters { pagination_token } = parameters;
+
+    let pagination_token = pagination_token
+        .map(PaginationToken::from_string)
+        .transpose()?;
+
+    let rows = tags::list_tags(&repository.pool, pagination_token).await?;
+
+    let pagination_token = build_tags_pagination_token(&rows)
+        .map(|token| token.to_string())
+        .transpose()?;
+
+    Ok(TagsListing {
+        pagination_token,
+        tags: rows.into_iter().map(Into::into).collect(),
     })
 }
 

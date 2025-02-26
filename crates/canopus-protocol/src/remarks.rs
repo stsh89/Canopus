@@ -1,4 +1,4 @@
-use crate::{tags::Tag, Result};
+use crate::{Result, tags::Tag};
 use chrono::{DateTime, Utc};
 use std::future::Future;
 use uuid::Uuid;

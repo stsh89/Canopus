@@ -1,4 +1,4 @@
-use crate::{tags::TagRow, PaginationToken, DEFAULT_PAGE_SIZE};
+use crate::{DEFAULT_PAGE_SIZE, PaginationToken, tags::TagRow};
 use canopus_protocol::remarks::{Remark, RemarkAttributes};
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
