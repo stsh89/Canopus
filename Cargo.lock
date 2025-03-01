@@ -317,6 +317,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-websocket"
+version = "0.1.0"
+dependencies = [
+ "rocket",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
