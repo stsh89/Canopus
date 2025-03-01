@@ -257,6 +257,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-connector"
+version = "0.1.0"
+dependencies = [
+ "canopus-engine",
+]
+
+[[package]]
 name = "canopus-engine"
 version = "0.1.0"
 dependencies = [

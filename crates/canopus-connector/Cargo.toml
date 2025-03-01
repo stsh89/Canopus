@@ -1,0 +1,11 @@
+[package]
+name = "canopus-connector"
+version = "0.1.0"
+edition = { workspace = true }
+
+[lib]
+name = "canopus_connector"
+
+[dependencies]
+
+canopus-engine = { workspace = true }
