@@ -296,6 +296,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-shell"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "canopus-engine",
+ "chrono",
+ "csv",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "canopus-web"
 version = "0.1.0"
 dependencies = [

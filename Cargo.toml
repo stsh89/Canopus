@@ -5,6 +5,7 @@ members = [
     "crates/canopus-engine",
     "crates/canopus-protocol",
     "crates/canopus-repository",
+    "crates/canopus-shell",
     "crates/canopus-web",
 ]
 
