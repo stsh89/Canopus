@@ -306,12 +306,13 @@ dependencies = [
 name = "canopus-shell"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "canopus-engine",
  "chrono",
  "csv",
+ "eyre",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
  "uuid",
 ]
