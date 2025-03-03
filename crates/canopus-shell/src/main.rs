@@ -141,6 +141,6 @@ impl std::str::FromStr for ShellInput {
             return Ok(Self::Command(command));
         }
 
-        return Ok(Self::Query(s.to_string()));
+        Ok(Self::Query(s.to_string()))
     }
 }

@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub enum Resources {
     Tags,
     Remarks,
