@@ -9,9 +9,11 @@ use rocket::{
 };
 use uuid::Uuid;
 
+use crate::error::ApiError;
+
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
-struct TagPresenter {
+pub struct TagPresenter {
     id: Uuid,
     title: String,
     created_at: DateTime<Utc>,
@@ -25,27 +27,31 @@ pub struct TagsPresenter {
     page_token: Option<String>,
 }
 
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-pub struct ErrorPresenter {
-    error: String,
-}
-
 #[get("/?<page_token>")]
 pub async fn index(
     engine: &State<Engine>,
     page_token: Option<String>,
-) -> Result<Json<TagsPresenter>, Json<ErrorPresenter>> {
+) -> Result<Json<TagsPresenter>, ApiError> {
     let tags = tags::list_tags(
         engine,
         TagsListingParameters {
             pagination_token: page_token,
         },
     )
-    .await
-    .map_err(|err| Json(err.into()))?;
+    .await?;
 
     Ok(Json(tags.into()))
+}
+
+#[get("/<id>")]
+pub async fn get(engine: &State<Engine>, id: &str) -> Result<Json<TagPresenter>, ApiError> {
+    let id = id
+        .parse()
+        .map_err(|_err| ApiError::bad_request("ID is not a valid UUID"))?;
+
+    let tag = tags::get_tag(engine, id).await?;
+
+    Ok(Json(tag.into()))
 }
 
 impl From<Tag> for TagPresenter {
@@ -69,20 +75,6 @@ impl From<TagsListing> for TagsPresenter {
         Self {
             tags: tags.into_iter().map(Into::into).collect(),
             page_token: pagination_token,
-        }
-    }
-}
-
-impl From<canopus_engine::Error> for ErrorPresenter {
-    fn from(value: canopus_engine::Error) -> Self {
-        let report = match value {
-            canopus_engine::Error::EnvironmentVariable(report) => report,
-            canopus_engine::Error::File(report) => report,
-            canopus_engine::Error::Repository(report) => report,
-        };
-
-        Self {
-            error: format!("{}", report),
         }
     }
 }

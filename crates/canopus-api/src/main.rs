@@ -1,3 +1,4 @@
+mod error;
 mod tags;
 
 use canopus_engine::Engine;
@@ -11,6 +12,7 @@ async fn main() -> anyhow::Result<()> {
 
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
+        .mount("/tags", routes![tags::get])
         .manage(engine)
         .launch()
         .await?;
