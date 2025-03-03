@@ -1,12 +1,19 @@
+mod tags;
+
+use canopus_engine::Engine;
+
 #[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
-}
+#[rocket::main]
+async fn main() -> anyhow::Result<()> {
+    let engine = Engine::start().await?;
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+    let _rocket = rocket::build()
+        .mount("/tags", routes![tags::index])
+        .manage(engine)
+        .launch()
+        .await?;
+
+    Ok(())
 }
