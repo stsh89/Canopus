@@ -14,7 +14,7 @@ pub enum ApiError {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ErrorPresenter {
-    error: String,
+    pub error: String,
 }
 
 impl From<canopus_engine::Error> for ApiError {
