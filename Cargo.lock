@@ -173,6 +173,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f61dac84819c6588b558454b194026eb1f09c293b9036ae9b159e74e73ab6cf9"
 
 [[package]]
+name = "canopus-api"
+version = "0.1.0"
+dependencies = [
+ "canopus-engine",
+]
+
+[[package]]
 name = "canopus-cli"
 version = "0.1.0"
 dependencies = [

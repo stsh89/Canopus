@@ -1,0 +1,8 @@
+[package]
+name = "canopus-api"
+version = "0.1.0"
+edition = { workspace = true }
+
+[dependencies]
+
+canopus-engine = { workspace = true }
