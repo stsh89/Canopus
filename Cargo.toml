@@ -2,13 +2,10 @@
 resolver = "3"
 members = [
     "crates/canopus-cli",
-    "crates/canopus-connector",
     "crates/canopus-engine",
     "crates/canopus-protocol",
     "crates/canopus-repository",
     "crates/canopus-shell",
-    "crates/canopus-web",
-    "crates/canopus-websocket",
 ]
 
 [workspace.package]
@@ -33,4 +30,3 @@ uuid = "1.13.1"
 canopus-engine = { path = "crates/canopus-engine" }
 canopus-protocol = { path = "crates/canopus-protocol" }
 canopus-repository = { path = "crates/canopus-repository" }
-canopus-connector = { path = "crates/canopus-connector" }
