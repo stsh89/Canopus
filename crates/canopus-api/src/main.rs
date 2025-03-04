@@ -2,8 +2,8 @@ mod error;
 mod tags;
 
 use canopus_engine::Engine;
-use error::ErrorPresenter;
-use rocket::{Request, serde::json::Json};
+use error::Error;
+use rocket::Request;
 
 #[macro_use]
 extern crate rocket;
@@ -24,8 +24,6 @@ async fn main() -> anyhow::Result<()> {
 }
 
 #[catch(404)]
-fn not_found(_req: &Request) -> Json<ErrorPresenter> {
-    Json(ErrorPresenter {
-        error: "Resource not found. Available resources: remarks, tags".to_string(),
-    })
+fn not_found(_req: &Request) -> Error {
+    Error::unimplemented()
 }

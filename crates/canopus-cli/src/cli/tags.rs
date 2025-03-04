@@ -1,6 +1,7 @@
 use crate::{formatter, session::Session};
 use canopus_engine::{
-    tags::{self, TagsListingParameters}, Engine
+    Engine,
+    tags::{self, TagsListingParameters},
 };
 use clap::Parser;
 use uuid::Uuid;

@@ -25,20 +25,18 @@ impl Engine {
 }
 
 fn initialize_environment() -> Result<()> {
-    dotenvy::dotenv()
-        .map_err(|err| eyre::Error::from(err).wrap_err("Failed to load .env file"))?;
+    dotenvy::dotenv().map_err(|err| eyre::Error::from(err).wrap_err("Failed to load .env file"))?;
 
     Ok(())
 }
 
 async fn initialize_repository() -> Result<Repository> {
-    let database_url = env::var("DATABASE_URL").map_err(|err| {
-        eyre::Error::from(err).wrap_err("Missing DATABASE_URL")
-    })?;
+    let database_url = env::var("DATABASE_URL")
+        .map_err(|err| eyre::Error::from(err).wrap_err("Missing DATABASE_URL"))?;
 
-    let pool = PgPool::connect(&database_url).await.map_err(|err| {
-        eyre::Error::from(err).wrap_err("Failed to connect to database")
-    })?;
+    let pool = PgPool::connect(&database_url)
+        .await
+        .map_err(|err| eyre::Error::from(err).wrap_err("Failed to connect to database"))?;
 
     Ok(Repository { pool })
 }

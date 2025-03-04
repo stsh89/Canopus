@@ -27,9 +27,7 @@ pub async fn index(
 
 #[get("/<id>")]
 pub async fn find(engine: &State<Engine>, id: &str) -> Result<Json<TagMessage>, Error> {
-    let id = id
-        .parse()
-        .map_err(|_err| Error::bad_request("ID is not a valid UUID"))?;
+    let id = id.parse().map_err(|_err| Error::invalid_id())?;
 
     let tag = tags::get_tag(engine, id).await?;
 

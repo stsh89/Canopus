@@ -1,6 +1,6 @@
+use crate::Tag;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use crate::Tag;
 
 pub struct Remark {
     id: Uuid,

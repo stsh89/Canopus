@@ -6,7 +6,7 @@ use base64::{
     alphabet,
     engine::{GeneralPurpose, general_purpose},
 };
-use canopus_definitions::{Error, Remark, Tag, Result};
+use canopus_definitions::{Error, Remark, Result, Tag};
 use canopus_operations::{
     remarks::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
@@ -87,17 +87,16 @@ impl GetTag for Repository {
 
 impl InsertRemark for Repository {
     async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid> {
-        let id = save_remark(self, new_remark).await.map_err(Into::<eyre::Error>::into)?;
+        let id = save_remark(self, new_remark)
+            .await
+            .map_err(Into::<eyre::Error>::into)?;
 
         Ok(id)
     }
 }
 
 impl ListRemarks for Repository {
-    async fn list_remarks(
-        &self,
-        parameters: RemarksListingParameters,
-    ) -> Result<RemarksListing> {
+    async fn list_remarks(&self, parameters: RemarksListingParameters) -> Result<RemarksListing> {
         let listing = list_remarks(self, parameters).await?;
 
         Ok(listing)
@@ -105,10 +104,7 @@ impl ListRemarks for Repository {
 }
 
 impl ListTags for Repository {
-    async fn list_tags(
-        &self,
-        parameters: TagsListingParameters,
-    ) -> Result<TagsListing> {
+    async fn list_tags(&self, parameters: TagsListingParameters) -> Result<TagsListing> {
         let listing = list_tags(self, parameters).await?;
 
         Ok(listing)
@@ -117,13 +113,19 @@ impl ListTags for Repository {
 
 impl UpdateRemark for Repository {
     async fn update_remark(&self, parameters: RemarkUpdates) -> Result<()> {
-        update_remark(self, parameters).await.map_err(Into::<eyre::Error>::into)?;
+        update_remark(self, parameters)
+            .await
+            .map_err(Into::<eyre::Error>::into)?;
 
         Ok(())
     }
 }
 
-async fn assign_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> sqlx::Result<()> {
+async fn assign_tags(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+    tags: Vec<String>,
+) -> sqlx::Result<()> {
     for tag in tags {
         let tag_id = find_or_create_tag(tx, &tag).await?;
 
@@ -281,7 +283,11 @@ async fn save_remark(repository: &Repository, new_remark: NewRemark) -> sqlx::Re
     Ok(remark_id)
 }
 
-async fn unset_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> sqlx::Result<()> {
+async fn unset_tags(
+    tx: &mut PgTransaction<'_>,
+    remark_id: Uuid,
+    tags: Vec<String>,
+) -> sqlx::Result<()> {
     for tag in tags {
         let Some(tag_id) = tags::find(tx, &tag).await? else {
             continue;

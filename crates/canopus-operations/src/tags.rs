@@ -1,5 +1,5 @@
+use canopus_definitions::{Result, Tag};
 use std::future::Future;
-use canopus_definitions::{Tag, Result};
 use uuid::Uuid;
 
 pub trait GetTag {

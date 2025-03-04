@@ -2,14 +2,20 @@ use uuid::Uuid;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{resource} with ID {id} not found")]
-    NotFound {
-        resource: &'static str,
-        id: Uuid,
+    #[error("Invalid argument: {argument} {reason}")]
+    InvalidArgument {
+        argument: &'static str,
+        reason: &'static str,
     },
 
+    #[error("{resource} with ID {id} not found")]
+    NotFound { resource: &'static str, id: Uuid },
+
     #[error("Unexpected failure. Please try again later")]
-    Unexpected(#[from] eyre::Error),
+    Internal(#[from] eyre::Error),
+
+    #[error("The operation is not implemented or not supported/enabled")]
+    Unimplemented,
 }
 
 impl Error {
@@ -28,6 +34,6 @@ impl Error {
     }
 
     pub fn unexpected(err: impl Into<eyre::Error>) -> Self {
-        Error::Unexpected(err.into())
+        Error::Internal(err.into())
     }
 }
