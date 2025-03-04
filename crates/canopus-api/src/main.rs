@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
 
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
-        .mount("/tags", routes![tags::get])
+        .mount("/tags", routes![tags::find])
         .register("/", catchers![not_found])
         .manage(engine)
         .launch()

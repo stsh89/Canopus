@@ -1,5 +1,5 @@
 use crate::{DEFAULT_PAGE_SIZE, PaginationToken, tags::TagRow};
-use canopus_protocol::remarks::{Remark, RemarkAttributes};
+use canopus_definitions::{Remark, RemarkAttributes};
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;

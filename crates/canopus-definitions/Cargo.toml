@@ -1,0 +1,13 @@
+[package]
+name = "canopus-definitions"
+version = "0.1.0"
+edition = { workspace = true }
+
+[lib]
+name = "canopus_definitions"
+
+[dependencies]
+chrono = { workspace = true }
+eyre = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }

@@ -6,12 +6,13 @@ use base64::{
     alphabet,
     engine::{GeneralPurpose, general_purpose},
 };
-use canopus_protocol::{
+use canopus_definitions::{CanopusError, Remark, Tag};
+use canopus_operations::{
     remarks::{
-        DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, Remark, RemarkUpdates,
+        DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
         RemarksListing, RemarksListingParameters, UpdateRemark,
     },
-    tags::{GetTag, ListTags, Tag, TagsListing, TagsListingParameters},
+    tags::{GetTag, ListTags, TagsListing, TagsListingParameters},
 };
 use chrono::{DateTime, Utc};
 use remarks::RemarkRow;
@@ -25,7 +26,7 @@ const URL_SAFE_NO_PAD_ENGINE: GeneralPurpose =
     GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 #[derive(thiserror::Error, Debug)]
-enum Error {
+enum RepositoryError {
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
 
@@ -35,8 +36,6 @@ enum Error {
     #[error(transparent)]
     Base64Decode(#[from] base64::DecodeError),
 }
-
-type Result<T> = std::result::Result<T, Error>;
 
 pub struct Repository {
     pub pool: sqlx::PgPool,
@@ -49,7 +48,7 @@ pub struct PaginationToken {
 }
 
 impl PaginationToken {
-    fn from_string(token: String) -> Result<Self> {
+    fn from_string(token: String) -> Result<Self, RepositoryError> {
         use base64::Engine;
 
         let json = URL_SAFE_NO_PAD_ENGINE.decode(token)?;
@@ -59,7 +58,7 @@ impl PaginationToken {
         Ok(token)
     }
 
-    fn to_string(&self) -> Result<String> {
+    fn to_string(&self) -> Result<String, RepositoryError> {
         use base64::Engine;
 
         let json = serde_json::to_string(&self)?;
@@ -69,7 +68,7 @@ impl PaginationToken {
 }
 
 impl DeleteRemark for Repository {
-    async fn delete_remark(&self, id: Uuid) -> canopus_protocol::Result<()> {
+    async fn delete_remark(&self, id: Uuid) -> Result<(), CanopusError> {
         delete_remark(self, id).await?;
 
         Ok(())
@@ -77,7 +76,7 @@ impl DeleteRemark for Repository {
 }
 
 impl GetRemark for Repository {
-    async fn get_remark(&self, remark_id: Uuid) -> canopus_protocol::Result<Remark> {
+    async fn get_remark(&self, remark_id: Uuid) -> Result<Remark, CanopusError> {
         let remark = get_remark(self, remark_id).await?;
 
         Ok(remark)
@@ -85,7 +84,7 @@ impl GetRemark for Repository {
 }
 
 impl GetTag for Repository {
-    async fn get_tag(&self, tag_id: Uuid) -> canopus_protocol::Result<Tag> {
+    async fn get_tag(&self, tag_id: Uuid) -> Result<Tag, CanopusError> {
         let tag = get_tag(self, tag_id).await?;
 
         Ok(tag)
@@ -93,7 +92,7 @@ impl GetTag for Repository {
 }
 
 impl InsertRemark for Repository {
-    async fn insert_remark(&self, new_remark: NewRemark) -> canopus_protocol::Result<Uuid> {
+    async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid, CanopusError> {
         let id = save_remark(self, new_remark).await?;
 
         Ok(id)
@@ -104,7 +103,7 @@ impl ListRemarks for Repository {
     async fn list_remarks(
         &self,
         parameters: RemarksListingParameters,
-    ) -> canopus_protocol::Result<RemarksListing> {
+    ) -> Result<RemarksListing, CanopusError> {
         let listing = list_remarks(self, parameters).await?;
 
         Ok(listing)
@@ -115,7 +114,7 @@ impl ListTags for Repository {
     async fn list_tags(
         &self,
         parameters: TagsListingParameters,
-    ) -> canopus_protocol::Result<TagsListing> {
+    ) -> Result<TagsListing, CanopusError> {
         let listing = list_tags(self, parameters).await?;
 
         Ok(listing)
@@ -123,14 +122,14 @@ impl ListTags for Repository {
 }
 
 impl UpdateRemark for Repository {
-    async fn update_remark(&self, parameters: RemarkUpdates) -> canopus_protocol::Result<()> {
+    async fn update_remark(&self, parameters: RemarkUpdates) -> Result<(), CanopusError> {
         update_remark(self, parameters).await?;
 
         Ok(())
     }
 }
 
-async fn assign_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<()> {
+async fn assign_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<(), RepositoryError> {
     for tag in tags {
         let tag_id = find_or_create_tag(tx, &tag).await?;
 
@@ -164,7 +163,7 @@ fn build_tags_pagination_token(rows: &[TagRow]) -> Option<PaginationToken> {
     })
 }
 
-async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<()> {
+async fn delete_remark(repository: &Repository, remark_id: Uuid) -> Result<(), RepositoryError> {
     remarks::get_remark(&repository.pool, remark_id).await?;
 
     let mut tx = repository.pool.begin().await?;
@@ -186,7 +185,7 @@ async fn find_or_create_tag(tx: &mut PgTransaction<'_>, title: &str) -> sqlx::Re
     tags::create_tag(tx, title).await
 }
 
-async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
+async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark, RepositoryError> {
     let row = remarks::get_remark(&repository.pool, id).await?;
     let mut remark = Remark::from(row);
 
@@ -201,7 +200,7 @@ async fn get_remark(repository: &Repository, id: Uuid) -> Result<Remark> {
     Ok(remark)
 }
 
-async fn get_tag(repository: &Repository, id: Uuid) -> Result<Tag> {
+async fn get_tag(repository: &Repository, id: Uuid) -> Result<Tag, RepositoryError> {
     let row = tags::get_tag(&repository.pool, id).await?;
 
     Ok(row.into())
@@ -210,7 +209,7 @@ async fn get_tag(repository: &Repository, id: Uuid) -> Result<Tag> {
 async fn list_remarks(
     repository: &Repository,
     parameters: RemarksListingParameters,
-) -> Result<RemarksListing> {
+) -> Result<RemarksListing, RepositoryError> {
     let RemarksListingParameters { pagination_token } = parameters;
 
     let pagination_token = pagination_token
@@ -232,7 +231,7 @@ async fn list_remarks(
 async fn list_tags(
     repository: &Repository,
     parameters: TagsListingParameters,
-) -> Result<TagsListing> {
+) -> Result<TagsListing, RepositoryError> {
     let TagsListingParameters { pagination_token } = parameters;
 
     let pagination_token = pagination_token
@@ -251,11 +250,7 @@ async fn list_tags(
     })
 }
 
-async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> Result<()> {
-    if parameters.is_empty() {
-        return Ok(());
-    }
-
+async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> Result<(), RepositoryError> {
     let RemarkUpdates {
         id,
         essence,
@@ -279,7 +274,7 @@ async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> Re
     Ok(())
 }
 
-async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid> {
+async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<Uuid, RepositoryError> {
     let NewRemark { essence, tags } = new_remark;
 
     let mut tx = repository.pool.begin().await?;
@@ -292,7 +287,7 @@ async fn save_remark(repository: &Repository, new_remark: NewRemark) -> Result<U
     Ok(remark_id)
 }
 
-async fn unset_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<()> {
+async fn unset_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<String>) -> Result<(), RepositoryError> {
     for tag in tags {
         let Some(tag_id) = tags::find(tx, &tag).await? else {
             continue;
@@ -304,8 +299,8 @@ async fn unset_tags(tx: &mut PgTransaction<'_>, remark_id: Uuid, tags: Vec<Strin
     Ok(())
 }
 
-impl From<Error> for canopus_protocol::Error {
-    fn from(error: Error) -> Self {
-        canopus_protocol::Error::Repository(error.into())
+impl From<RepositoryError> for CanopusError {
+    fn from(error: RepositoryError) -> Self {
+        CanopusError::Repository(error.into())
     }
 }

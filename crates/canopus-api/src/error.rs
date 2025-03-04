@@ -17,8 +17,8 @@ pub struct ErrorPresenter {
     pub error: String,
 }
 
-impl From<canopus_engine::Error> for ApiError {
-    fn from(_value: canopus_engine::Error) -> Self {
+impl From<canopus_engine::EngineError> for ApiError {
+    fn from(_value: canopus_engine::EngineError) -> Self {
         Self::Internal(())
     }
 }

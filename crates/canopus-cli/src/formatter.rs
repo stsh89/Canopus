@@ -1,4 +1,4 @@
-use canopus_engine::{remarks::Remark, tags::Tag};
+use canopus_definitions::{Remark, Tag};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::io::{self, Write};

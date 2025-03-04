@@ -1,4 +1,4 @@
-use canopus_protocol::tags::{Tag, TagAttributes};
+use canopus_definitions::{Tag, TagAttributes};
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, PgTransaction};
 use uuid::Uuid;

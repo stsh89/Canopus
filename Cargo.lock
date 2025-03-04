@@ -247,6 +247,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "canopus-engine",
+ "canopus-wire",
  "chrono",
  "rocket",
  "uuid",
@@ -257,6 +258,7 @@ name = "canopus-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "canopus-definitions",
  "canopus-engine",
  "chrono",
  "clap",
@@ -268,10 +270,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-client"
+version = "0.1.0"
+
+[[package]]
+name = "canopus-definitions"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "eyre",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "canopus-engine"
 version = "0.1.0"
 dependencies = [
- "canopus-protocol",
+ "canopus-definitions",
+ "canopus-operations",
  "canopus-repository",
  "dotenvy",
  "eyre",
@@ -281,9 +298,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "canopus-protocol"
+name = "canopus-operations"
 version = "0.1.0"
 dependencies = [
+ "canopus-definitions",
  "chrono",
  "csv",
  "eyre",
@@ -296,7 +314,8 @@ name = "canopus-repository"
 version = "0.1.0"
 dependencies = [
  "base64",
- "canopus-protocol",
+ "canopus-definitions",
+ "canopus-operations",
  "chrono",
  "eyre",
  "serde",
@@ -318,6 +337,16 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "canopus-wire"
+version = "0.1.0"
+dependencies = [
+ "canopus-definitions",
+ "chrono",
+ "serde",
  "uuid",
 ]
 

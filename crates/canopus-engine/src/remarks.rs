@@ -1,9 +1,10 @@
-pub use canopus_protocol::remarks::{
-    NewRemark, Remark, RemarkUpdates, RemarksListing, RemarksListingParameters,
+use canopus_definitions::Remark;
+use canopus_operations::remarks;
+pub use canopus_operations::remarks::{
+    NewRemark, RemarkUpdates, RemarksListing, RemarksListingParameters,
 };
 
 use crate::{Engine, Result};
-use canopus_protocol::remarks;
 use uuid::Uuid;
 
 pub async fn create_remark(engine: &Engine, new_remark: NewRemark) -> Result<Uuid> {

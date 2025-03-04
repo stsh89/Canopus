@@ -10,3 +10,4 @@ rocket = { workspace = true, features = ["json"] }
 uuid = { workspace = true }
 
 canopus-engine = { workspace = true }
+canopus-wire = { workspace = true }
