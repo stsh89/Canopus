@@ -1,4 +1,4 @@
-use crate::error::ApiError;
+use crate::error::Error;
 use canopus_engine::{
     Engine,
     tags::{self, TagsListingParameters},
@@ -10,7 +10,7 @@ use rocket::{State, serde::json::Json};
 pub async fn index(
     engine: &State<Engine>,
     page_token: Option<String>,
-) -> Result<Json<TagsMessage>, ApiError> {
+) -> Result<Json<TagsMessage>, Error> {
     let tags = tags::list_tags(
         engine,
         TagsListingParameters {
@@ -26,10 +26,10 @@ pub async fn index(
 }
 
 #[get("/<id>")]
-pub async fn find(engine: &State<Engine>, id: &str) -> Result<Json<TagMessage>, ApiError> {
+pub async fn find(engine: &State<Engine>, id: &str) -> Result<Json<TagMessage>, Error> {
     let id = id
         .parse()
-        .map_err(|_err| ApiError::bad_request("ID is not a valid UUID"))?;
+        .map_err(|_err| Error::bad_request("ID is not a valid UUID"))?;
 
     let tag = tags::get_tag(engine, id).await?;
 

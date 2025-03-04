@@ -246,6 +246,7 @@ name = "canopus-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "canopus-definitions",
  "canopus-engine",
  "canopus-wire",
  "chrono",

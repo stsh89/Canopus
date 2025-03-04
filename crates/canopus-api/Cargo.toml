@@ -9,5 +9,6 @@ chrono = { workspace = true }
 rocket = { workspace = true, features = ["json"] }
 uuid = { workspace = true }
 
+canopus-definitions = { workspace = true }
 canopus-engine = { workspace = true }
 canopus-wire = { workspace = true }

@@ -1,6 +1,5 @@
-use crate::Result;
 use std::future::Future;
-use canopus_definitions::Tag;
+use canopus_definitions::{Tag, Result};
 use uuid::Uuid;
 
 pub trait GetTag {
