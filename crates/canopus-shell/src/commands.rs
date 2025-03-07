@@ -4,19 +4,19 @@ pub enum Commands {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CommandError {
+pub enum Error {
     #[error(r#"Error: unkown command or invaild arguments: "{0}". Enter ".help" for help"#)]
     Parse(String),
 }
 
 impl std::str::FromStr for Commands {
-    type Err = CommandError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let command = match s {
             ".help" => Self::Help,
             ".quit" => Self::Quit,
-            _ => return Err(CommandError::Parse(s.to_string())),
+            _ => return Err(Error::Parse(s.to_string())),
         };
 
         Ok(command)

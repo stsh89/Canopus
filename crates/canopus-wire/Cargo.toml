@@ -7,8 +7,9 @@ edition = { workspace = true }
 name = "canopus_wire"
 
 [dependencies]
-chrono = { workspace = true }
-serde = { workspace = true }
-uuid = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+eyre = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["serde"] }
 
 canopus-definitions = { workspace = true }

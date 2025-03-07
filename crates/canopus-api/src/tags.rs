@@ -3,14 +3,14 @@ use canopus_engine::{
     Engine,
     tags::{self, TagsListingParameters},
 };
-use canopus_wire::{TagMessage, TagsMessage};
+use canopus_wire::{PageMessage, TagMessage};
 use rocket::{State, serde::json::Json};
 
 #[get("/?<page_token>")]
 pub async fn index(
     engine: &State<Engine>,
     page_token: Option<String>,
-) -> Result<Json<TagsMessage>, Error> {
+) -> Result<Json<PageMessage<TagMessage>>, Error> {
     let tags = tags::list_tags(
         engine,
         TagsListingParameters {
@@ -19,8 +19,8 @@ pub async fn index(
     )
     .await?;
 
-    Ok(Json(TagsMessage {
-        page: tags.tags.into_iter().map(Into::into).collect(),
+    Ok(Json(PageMessage {
+        items: tags.tags.into_iter().map(Into::into).collect(),
         next_page_token: tags.pagination_token,
     }))
 }

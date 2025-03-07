@@ -7,3 +7,16 @@ edition = { workspace = true }
 name = "canopus_client"
 
 [dependencies]
+anyhow = { workspace = true }
+eyre = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+canopus-definitions = { workspace = true }
+canopus-wire = { workspace = true }
+
+[dev-dependencies]
+clap = { workspace = true, features = ["derive"]}
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

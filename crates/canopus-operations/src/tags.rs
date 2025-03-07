@@ -1,4 +1,5 @@
-use canopus_definitions::{Result, Tag};
+use crate::Result;
+use canopus_definitions::Tag;
 use std::future::Future;
 use uuid::Uuid;
 

@@ -6,7 +6,7 @@ use base64::{
     alphabet,
     engine::{GeneralPurpose, general_purpose},
 };
-use canopus_definitions::{Error, Remark, Result, Tag};
+use canopus_definitions::{ApplicationError, Remark, Tag};
 use canopus_operations::{
     remarks::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
@@ -56,7 +56,7 @@ impl PaginationToken {
 }
 
 impl DeleteRemark for Repository {
-    async fn delete_remark(&self, id: Uuid) -> Result<()> {
+    async fn delete_remark(&self, id: Uuid) -> Result<(), ApplicationError> {
         delete_remark(self, id).await?;
 
         Ok(())
@@ -64,10 +64,10 @@ impl DeleteRemark for Repository {
 }
 
 impl GetRemark for Repository {
-    async fn get_remark(&self, remark_id: Uuid) -> Result<Remark> {
+    async fn get_remark(&self, remark_id: Uuid) -> Result<Remark, ApplicationError> {
         let remark = get_remark(self, remark_id).await.map_err(|err| match err {
-            sqlx::Error::RowNotFound => Error::remark_not_found(remark_id),
-            err => Error::unexpected(err),
+            sqlx::Error::RowNotFound => ApplicationError::remark_not_found(remark_id),
+            err => ApplicationError::unexpected(err),
         })?;
 
         Ok(remark)
@@ -75,10 +75,10 @@ impl GetRemark for Repository {
 }
 
 impl GetTag for Repository {
-    async fn get_tag(&self, tag_id: Uuid) -> Result<Tag> {
+    async fn get_tag(&self, tag_id: Uuid) -> Result<Tag, ApplicationError> {
         let tag = get_tag(self, tag_id).await.map_err(|err| match err {
-            sqlx::Error::RowNotFound => Error::tag_not_found(tag_id),
-            err => Error::unexpected(err),
+            sqlx::Error::RowNotFound => ApplicationError::tag_not_found(tag_id),
+            err => ApplicationError::unexpected(err),
         })?;
 
         Ok(tag)
@@ -86,7 +86,7 @@ impl GetTag for Repository {
 }
 
 impl InsertRemark for Repository {
-    async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid> {
+    async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid, ApplicationError> {
         let id = save_remark(self, new_remark)
             .await
             .map_err(Into::<eyre::Error>::into)?;
@@ -96,7 +96,10 @@ impl InsertRemark for Repository {
 }
 
 impl ListRemarks for Repository {
-    async fn list_remarks(&self, parameters: RemarksListingParameters) -> Result<RemarksListing> {
+    async fn list_remarks(
+        &self,
+        parameters: RemarksListingParameters,
+    ) -> Result<RemarksListing, ApplicationError> {
         let listing = list_remarks(self, parameters).await?;
 
         Ok(listing)
@@ -104,7 +107,10 @@ impl ListRemarks for Repository {
 }
 
 impl ListTags for Repository {
-    async fn list_tags(&self, parameters: TagsListingParameters) -> Result<TagsListing> {
+    async fn list_tags(
+        &self,
+        parameters: TagsListingParameters,
+    ) -> Result<TagsListing, ApplicationError> {
         let listing = list_tags(self, parameters).await?;
 
         Ok(listing)
@@ -112,7 +118,7 @@ impl ListTags for Repository {
 }
 
 impl UpdateRemark for Repository {
-    async fn update_remark(&self, parameters: RemarkUpdates) -> Result<()> {
+    async fn update_remark(&self, parameters: RemarkUpdates) -> Result<(), ApplicationError> {
         update_remark(self, parameters)
             .await
             .map_err(Into::<eyre::Error>::into)?;
