@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct Page<T> where T: Serialize{
+pub struct Page<T>
+where
+    T: Serialize,
+{
     pub items: Vec<T>,
 
     #[serde(skip_serializing_if = "Option::is_none")]

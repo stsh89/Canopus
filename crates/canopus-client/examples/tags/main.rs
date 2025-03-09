@@ -37,8 +37,7 @@ async fn try_main() -> anyhow::Result<()> {
             let tag = client.show_tag(id).await?;
 
             println!("{}", tag);
-
-        },
+        }
         Commands::List { page_token } => {
             let page = client.list_tags(page_token).await?;
 

@@ -1,7 +1,7 @@
 use crate::{Engine, Result};
 use canopus_definitions::{Page, Tag};
-pub use canopus_operations::tags::TagsListingParameters;
 use canopus_operations::tags;
+pub use canopus_operations::tags::TagsListingParameters;
 use uuid::Uuid;
 
 pub async fn get_tag(engine: &Engine, id: Uuid) -> Result<Tag> {

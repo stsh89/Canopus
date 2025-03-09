@@ -247,7 +247,7 @@ async fn list_tags(
     let pagination_token = build_tags_pagination_token(&rows)
         .map(|token| token.to_string())
         .transpose()?
-    .map(Into::<PageToken>::into);
+        .map(Into::<PageToken>::into);
 
     Ok(Page {
         next_page_token: pagination_token,
