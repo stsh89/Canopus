@@ -1,21 +1,20 @@
 use canopus_definitions::ApplicationError;
 use canopus_engine::Error as EngineError;
-use canopus_wire::ErrorMessage;
 use rocket::serde::json::Json;
 
 #[derive(Responder)]
 pub enum Error {
     #[response(status = 400, content_type = "json")]
-    BadRequest(Json<ErrorMessage>),
+    InvalidArgument(Json<ApplicationError>),
 
     #[response(status = 500, content_type = "json")]
-    Internal(Json<ErrorMessage>),
+    Internal(Json<ApplicationError>),
 
     #[response(status = 404, content_type = "json")]
-    NotFound(Json<ErrorMessage>),
+    NotFound(Json<ApplicationError>),
 
     #[response(status = 404, content_type = "json")]
-    Unimplemented(Json<ErrorMessage>),
+    Unknown(Json<ApplicationError>),
 }
 
 impl From<EngineError> for Error {
@@ -23,12 +22,13 @@ impl From<EngineError> for Error {
         match value {
             EngineError::ApplicationError(application_error) => match application_error {
                 ApplicationError::InvalidArgument { argument, reason } => {
-                    Error::bad_request(ErrorMessage::InvalidArgument { argument, reason })
+                    Error::bad_request(ApplicationError::InvalidArgument { argument, reason })
                 }
                 ApplicationError::NotFound { resource, id } => {
-                    Error::not_found(ErrorMessage::NotFound { resource, id })
+                    Error::not_found(ApplicationError::NotFound { resource, id })
                 }
-                ApplicationError::Internal(_report) => Error::internal(),
+                ApplicationError::Internal => Error::internal(),
+                ApplicationError::Unknown => Error::unknown(),
             },
             EngineError::Internal(_report) => Error::internal(),
         }
@@ -36,26 +36,26 @@ impl From<EngineError> for Error {
 }
 
 impl Error {
-    fn bad_request(message: ErrorMessage) -> Self {
-        Self::BadRequest(Json(message))
+    fn bad_request(message: ApplicationError) -> Self {
+        Self::InvalidArgument(Json(message))
     }
 
-    fn not_found(message: ErrorMessage) -> Self {
+    fn not_found(message: ApplicationError) -> Self {
         Self::NotFound(Json(message))
     }
 
     pub fn invalid_id() -> Self {
-        Self::BadRequest(Json(ErrorMessage::InvalidArgument {
+        Self::InvalidArgument(Json(ApplicationError::InvalidArgument {
             argument: "ID".to_string(),
             reason: "is not a valid UUID".to_string(),
         }))
     }
 
-    pub fn unimplemented() -> Self {
-        Self::Unimplemented(Json(ErrorMessage::Unimplemented))
+    fn internal() -> Self {
+        Self::Internal(Json(ApplicationError::Internal))
     }
 
-    fn internal() -> Self {
-        Self::Internal(Json(ErrorMessage::Internal))
+    pub fn unknown() -> Self {
+        Self::Unknown(Json(ApplicationError::Unknown))
     }
 }

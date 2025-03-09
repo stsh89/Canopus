@@ -1,6 +1,8 @@
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Deserialize, Serialize)]
 pub struct Tag {
     id: Uuid,
     title: TagTitle,
@@ -15,6 +17,7 @@ pub struct TagAttributes {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct TagTitle(String);
 
 impl Tag {
@@ -61,11 +64,8 @@ impl std::ops::Deref for TagTitle {
 
 impl std::fmt::Display for Tag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Tag {{ id: {}, title: {}}}",
-            self.id,
-            self.title().as_str(),
-        )
+        let json = serde_json::to_string_pretty(&self).map_err(|_| std::fmt::Error)?;
+
+        f.write_str(&json)
     }
 }

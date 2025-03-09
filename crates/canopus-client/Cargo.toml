@@ -15,7 +15,6 @@ thiserror = { workspace = true }
 uuid = { workspace = true }
 
 canopus-definitions = { workspace = true }
-canopus-wire = { workspace = true }
 
 [dev-dependencies]
 clap = { workspace = true, features = ["derive"]}

@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
 
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
-        .mount("/tags", routes![tags::find])
+        .mount("/tags", routes![tags::show])
         .register("/", catchers![not_found])
         .manage(engine)
         .launch()
@@ -25,5 +25,5 @@ async fn main() -> anyhow::Result<()> {
 
 #[catch(404)]
 fn not_found(_req: &Request) -> Error {
-    Error::unimplemented()
+    Error::unknown()
 }

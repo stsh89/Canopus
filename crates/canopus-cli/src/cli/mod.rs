@@ -1,5 +1,5 @@
 mod remarks;
-mod tags;
+pub mod tags;
 
 use crate::session::Session;
 use canopus_engine::Engine;

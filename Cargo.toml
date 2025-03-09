@@ -9,7 +9,6 @@ members = [
     "crates/canopus-operations",
     "crates/canopus-repository",
     "crates/canopus-shell",
-    "crates/canopus-wire",
 ]
 
 [workspace.package]
@@ -38,4 +37,3 @@ canopus-definitions = { path = "crates/canopus-definitions" }
 canopus-engine = { path = "crates/canopus-engine" }
 canopus-operations = { path = "crates/canopus-operations" }
 canopus-repository = { path = "crates/canopus-repository" }
-canopus-wire = { path = "crates/canopus-wire" }

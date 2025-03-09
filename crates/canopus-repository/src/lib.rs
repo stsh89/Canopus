@@ -6,13 +6,13 @@ use base64::{
     alphabet,
     engine::{GeneralPurpose, general_purpose},
 };
-use canopus_definitions::{ApplicationError, Remark, Tag};
+use canopus_definitions::{ApplicationError, Page, PageToken, Remark, Tag};
 use canopus_operations::{
     remarks::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
         RemarksListing, RemarksListingParameters, UpdateRemark,
     },
-    tags::{GetTag, ListTags, TagsListing, TagsListingParameters},
+    tags::{GetTag, ListTags, TagsListingParameters},
 };
 use chrono::{DateTime, Utc};
 use remarks::RemarkRow;
@@ -21,7 +21,7 @@ use sqlx::PgTransaction;
 use tags::TagRow;
 use uuid::Uuid;
 
-const DEFAULT_PAGE_SIZE: i64 = 25;
+const DEFAULT_PAGE_SIZE: i64 = 3;
 const URL_SAFE_NO_PAD_ENGINE: GeneralPurpose =
     GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
@@ -67,7 +67,7 @@ impl GetRemark for Repository {
     async fn get_remark(&self, remark_id: Uuid) -> Result<Remark, ApplicationError> {
         let remark = get_remark(self, remark_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::remark_not_found(remark_id),
-            err => ApplicationError::unexpected(err),
+            err => eyre::Error::from(err).into(),
         })?;
 
         Ok(remark)
@@ -78,7 +78,7 @@ impl GetTag for Repository {
     async fn get_tag(&self, tag_id: Uuid) -> Result<Tag, ApplicationError> {
         let tag = get_tag(self, tag_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::tag_not_found(tag_id),
-            err => ApplicationError::unexpected(err),
+            err => eyre::Error::from(err).into(),
         })?;
 
         Ok(tag)
@@ -110,10 +110,10 @@ impl ListTags for Repository {
     async fn list_tags(
         &self,
         parameters: TagsListingParameters,
-    ) -> Result<TagsListing, ApplicationError> {
-        let listing = list_tags(self, parameters).await?;
+    ) -> Result<Page<Tag>, ApplicationError> {
+        let page = list_tags(self, parameters).await?;
 
-        Ok(listing)
+        Ok(page)
     }
 }
 
@@ -233,8 +233,10 @@ async fn list_remarks(
 async fn list_tags(
     repository: &Repository,
     parameters: TagsListingParameters,
-) -> eyre::Result<TagsListing> {
-    let TagsListingParameters { pagination_token } = parameters;
+) -> eyre::Result<Page<Tag>> {
+    let TagsListingParameters {
+        page_token: pagination_token,
+    } = parameters;
 
     let pagination_token = pagination_token
         .map(PaginationToken::from_string)
@@ -244,11 +246,12 @@ async fn list_tags(
 
     let pagination_token = build_tags_pagination_token(&rows)
         .map(|token| token.to_string())
-        .transpose()?;
+        .transpose()?
+    .map(Into::<PageToken>::into);
 
-    Ok(TagsListing {
-        pagination_token,
-        tags: rows.into_iter().map(Into::into).collect(),
+    Ok(Page {
+        next_page_token: pagination_token,
+        items: rows.into_iter().map(Into::into).collect(),
     })
 }
 

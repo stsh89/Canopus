@@ -1,5 +1,4 @@
-use canopus_definitions::{Page, Tag};
-use canopus_wire::{ErrorMessage, PageMessage, TagMessage};
+use canopus_definitions::{ApplicationError, Page, Tag};
 use reqwest::Url;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -16,34 +15,25 @@ pub enum Error {
     #[error("Connection error. Check if server is up and running")]
     Connection,
 
-    #[error("Invalid argument error. {argument} {reason}")]
-    InvalidArgument { argument: String, reason: String },
-
-    #[error("Not found error. {resource} with ID {id} not found")]
-    NotFound { resource: String, id: Uuid },
-
-    #[error("Internal server error. Something went wrong on the server")]
-    InternalServer,
+    #[error(transparent)]
+    Application(#[from] ApplicationError),
 
     #[error("Internal client error")]
     Internal(#[from] eyre::Error),
-
-    #[error("Unimplemented error. The operation is not implemented or not supported/enabled")]
-    Unimplemented,
 }
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum GetTagResponse {
-    Ok(TagMessage),
-    Err(ErrorMessage),
+    Ok(Tag),
+    Err(ApplicationError),
 }
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum ListTagsResponse {
-    Ok(PageMessage<TagMessage>),
-    Err(ErrorMessage),
+    Ok(Page<Tag>),
+    Err(ApplicationError),
 }
 
 impl Client {
@@ -60,7 +50,7 @@ impl Client {
         })
     }
 
-    pub async fn get_tag(&self, id: Uuid) -> Result<Tag> {
+    pub async fn show_tag(&self, id: Uuid) -> Result<Tag> {
         let url = self
             .base_url
             .join(&format!("/tags/{}", id))
@@ -80,11 +70,15 @@ impl Client {
         }
     }
 
-    pub async fn list_tags(&self, _page_token: Option<String>) -> Result<Page<Tag>> {
-        let url = self
+    pub async fn list_tags(&self, page_token: Option<String>) -> Result<Page<Tag>> {
+        let mut url = self
             .base_url
             .join("/tags")
             .map_err(Into::<eyre::Error>::into)?;
+
+        if let Some(page_token) = page_token {
+            url.set_query(Some(&format!("page_token={}", page_token)));
+        }
 
         let response = self
             .inner
@@ -101,25 +95,12 @@ impl Client {
     }
 }
 
-impl From<ErrorMessage> for Error {
-    fn from(value: ErrorMessage) -> Self {
-        match value {
-            ErrorMessage::InvalidArgument { argument, reason } => {
-                Error::InvalidArgument { argument, reason }
-            }
-            ErrorMessage::NotFound { resource, id } => Error::NotFound { resource, id },
-            ErrorMessage::Internal => Error::InternalServer,
-            ErrorMessage::Unimplemented => Error::Unimplemented,
-        }
-    }
-}
-
 impl From<reqwest::Error> for Error {
     fn from(value: reqwest::Error) -> Self {
         if value.is_connect() {
             Error::Connection
         } else {
-            Self::InternalServer
+            Self::Internal(value.into())
         }
     }
 }

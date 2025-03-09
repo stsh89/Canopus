@@ -3,6 +3,7 @@ use std::{
     fs::{File, OpenOptions},
     path::Path,
 };
+use crate::Result;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Session {
@@ -45,7 +46,7 @@ impl Session {
         self.is_changed
     }
 
-    pub fn start() -> anyhow::Result<Session> {
+    pub fn start() -> Result<Session> {
         get_or_initialize_session()
     }
 
@@ -57,7 +58,7 @@ impl Session {
         self.tags_pagination_token.as_deref()
     }
 
-    pub fn reset(self) -> anyhow::Result<Self> {
+    pub fn reset(self) -> Result<Self> {
         let session = Self::default();
 
         session.save()?;
@@ -73,18 +74,18 @@ impl Session {
         self.change_attribute(SessionAttribute::TagsPaginationToken(Some(token)));
     }
 
-    pub fn save(&self) -> anyhow::Result<()> {
+    pub fn save(&self) -> Result<()> {
         write_session_file(self)
     }
 }
 
-pub fn get_or_initialize_session() -> anyhow::Result<Session> {
+pub fn get_or_initialize_session() -> Result<Session> {
     let session = get_session()?.unwrap_or_default();
 
     Ok(session)
 }
 
-fn get_session() -> anyhow::Result<Option<Session>> {
+fn get_session() -> Result<Option<Session>> {
     use std::io::Read;
 
     let mut file = read_session_file()?;
@@ -101,7 +102,7 @@ fn get_session() -> anyhow::Result<Option<Session>> {
     Ok(session)
 }
 
-fn read_session_file() -> anyhow::Result<File> {
+fn read_session_file() -> Result<File> {
     let mut options = OpenOptions::new();
 
     options.read(true);
@@ -109,7 +110,7 @@ fn read_session_file() -> anyhow::Result<File> {
     open_session_file(&mut options)
 }
 
-fn write_session_file(session: &Session) -> anyhow::Result<()> {
+fn write_session_file(session: &Session) -> Result<()> {
     let mut options = OpenOptions::new();
 
     options.write(true);
@@ -122,7 +123,7 @@ fn write_session_file(session: &Session) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn open_session_file(options: &mut OpenOptions) -> anyhow::Result<File> {
+fn open_session_file(options: &mut OpenOptions) -> Result<File> {
     if !Path::new("session.json").exists() {
         File::create("session.json")?;
     }

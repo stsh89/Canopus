@@ -254,7 +254,6 @@ dependencies = [
  "anyhow",
  "canopus-definitions",
  "canopus-engine",
- "canopus-wire",
  "chrono",
  "rocket",
  "uuid",
@@ -264,14 +263,15 @@ dependencies = [
 name = "canopus-cli"
 version = "0.1.0"
 dependencies = [
- "anyhow",
+ "canopus-client",
  "canopus-definitions",
- "canopus-engine",
  "chrono",
  "clap",
  "csv",
+ "eyre",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
  "uuid",
 ]
@@ -282,7 +282,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "canopus-definitions",
- "canopus-wire",
  "clap",
  "eyre",
  "reqwest",
@@ -298,6 +297,8 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "eyre",
+ "serde",
+ "serde_json",
  "thiserror",
  "uuid",
 ]
@@ -358,17 +359,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "url",
- "uuid",
-]
-
-[[package]]
-name = "canopus-wire"
-version = "0.1.0"
-dependencies = [
- "canopus-definitions",
- "chrono",
- "eyre",
- "serde",
  "uuid",
 ]
 

@@ -2,7 +2,7 @@ mod commands;
 mod resources;
 
 use canopus_client::{Client, Error as ClientError};
-use canopus_definitions::Tag;
+use canopus_definitions::{ApplicationError, Tag};
 use commands::{Commands, Error as CommandError};
 use resources::Resources;
 use std::io::{Stdin, Stdout};
@@ -46,7 +46,7 @@ enum ShellInput {
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error(transparent)]
-    Client(ClientError),
+    Application(ApplicationError),
 
     #[error(transparent)]
     Command(#[from] CommandError),
@@ -77,7 +77,7 @@ impl Shell {
     }
 
     async fn get_tag(&self, id: Uuid) -> Result<Tag> {
-        let tag = self.client.get_tag(id).await?;
+        let tag = self.client.show_tag(id).await?;
 
         Ok(tag)
     }
@@ -178,11 +178,8 @@ impl From<ClientError> for Error {
     fn from(value: ClientError) -> Self {
         match value {
             ClientError::Connection => todo!(),
-            ClientError::InvalidArgument { argument, reason } => todo!(),
-            ClientError::NotFound { resource, id } => todo!(),
-            ClientError::InternalServer => todo!(),
+            ClientError::Application(err) => Self::Application(err),
             ClientError::Internal(report) => todo!(),
-            ClientError::Unimplemented => todo!(),
         }
     }
 }
