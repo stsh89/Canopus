@@ -7,14 +7,11 @@ pub trait GetTag {
 }
 
 pub trait ListTags {
-    fn list_tags(
-        &self,
-        parameters: TagsListingParameters,
-    ) -> impl Future<Output = Result<Page<Tag>>>;
+    fn list_tags(&self, parameters: ListTagsParameters) -> impl Future<Output = Result<Page<Tag>>>;
 }
 
 #[derive(Default)]
-pub struct TagsListingParameters {
+pub struct ListTagsParameters {
     pub page_token: Option<String>,
 }
 
@@ -23,7 +20,7 @@ pub async fn get_tag(id: Uuid, repository: &impl GetTag) -> Result<Tag> {
 }
 
 pub async fn list_tags(
-    parameters: TagsListingParameters,
+    parameters: ListTagsParameters,
     repository: &impl ListTags,
 ) -> Result<Page<Tag>> {
     repository.list_tags(parameters).await

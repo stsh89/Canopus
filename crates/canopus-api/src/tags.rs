@@ -2,7 +2,7 @@ use crate::error::Error;
 use canopus_definitions::{Page, Tag};
 use canopus_engine::{
     Engine,
-    tags::{self, TagsListingParameters},
+    tags::{self, ListTagsParameters},
 };
 use rocket::{State, serde::json::Json};
 
@@ -11,7 +11,7 @@ pub async fn index(
     engine: &State<Engine>,
     page_token: Option<String>,
 ) -> Result<Json<Page<Tag>>, Error> {
-    let page = tags::list_tags(engine, TagsListingParameters { page_token }).await?;
+    let page = tags::list_tags(engine, ListTagsParameters { page_token }).await?;
 
     Ok(Json(page))
 }

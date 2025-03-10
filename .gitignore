@@ -2,4 +2,3 @@
 /docker/postgres.env
 /pg_dumps/*.bak
 /target
-session.json

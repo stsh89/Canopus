@@ -3,10 +3,18 @@ name = "canopus-cli"
 version = "0.1.0"
 edition = { workspace = true }
 
+[lib]
+name = "canopus_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "canopus-cli"
+
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
 csv = { workspace = true }
+dotenvy = { workspace = true }
 eyre = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

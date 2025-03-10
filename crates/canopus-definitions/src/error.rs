@@ -31,6 +31,13 @@ impl ApplicationError {
             id,
         }
     }
+
+    pub fn invalid_argument(argument: &str, reason: &str) -> Self {
+        ApplicationError::InvalidArgument {
+            argument: argument.to_string(),
+            reason: reason.to_string(),
+        }
+    }
 }
 
 impl From<eyre::Error> for ApplicationError {

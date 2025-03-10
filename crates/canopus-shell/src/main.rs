@@ -1,17 +1,18 @@
 mod commands;
 mod resources;
 
-use canopus_client::{Client, tags};
-use canopus_definitions::{ApplicationError, Result, Tag};
+use canopus_cli::CliState;
+use canopus_definitions::{ApplicationError, Result};
 use commands::Commands;
 use resources::Resources;
 use std::io::{Stdin, Stdout};
-use uuid::Uuid;
 
 const BASE_URL: &str = "canopus://127.0.0.1";
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::dotenv().map_err(Into::<eyre::Error>::into)?;
+
     let mut exit = false;
     let mut shell = Shell::start()?;
 
@@ -30,7 +31,7 @@ async fn main() -> Result<()> {
 }
 
 struct Shell {
-    client: Client,
+    state: CliState,
     stdout: Stdout,
     stdin: Stdin,
     resource: Option<Resources>,
@@ -49,11 +50,10 @@ impl Shell {
                 Commands::Help => print_help(&mut self.stdout)?,
             },
             ShellInput::Query(query) => {
-                let id: Uuid = query.parse().map_err(Into::<eyre::Error>::into)?;
+                let mut args: Vec<&str> = query.split_whitespace().collect();
+                args.insert(0, "");
 
-                let tag = tags::show(&self.client, id).await?;
-
-                print_tag(&mut self.stdout, tag)?
+                canopus_cli::run_from(&self.state, args).await?
             }
         };
 
@@ -81,7 +81,7 @@ impl Shell {
             stdin: std::io::stdin(),
             stdout: std::io::stdout(),
             resource: None,
-            client: Client::new()?,
+            state: CliState::new()?,
         })
     }
 
@@ -106,12 +106,6 @@ impl Shell {
 
 fn print_error(stdout: &mut Stdout, error: impl std::error::Error) -> Result<()> {
     print_message(stdout, error)?;
-
-    Ok(())
-}
-
-fn print_tag(stdout: &mut Stdout, tag: Tag) -> Result<()> {
-    print_message(stdout, tag.title().as_str())?;
 
     Ok(())
 }

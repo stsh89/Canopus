@@ -2,9 +2,9 @@ pub mod tags;
 
 use canopus_definitions::{ApplicationError, Result};
 use reqwest::Url;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(untagged)]
 enum ApiResponse<T> {
     Ok(T),
@@ -17,10 +17,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new() -> Result<Self> {
-        let base_url: Url = "http://127.0.0.1:8000"
-            .parse()
-            .map_err(Into::<eyre::Error>::into)?;
+    pub fn new(base_url: &str) -> Result<Self> {
+        let base_url: Url = base_url.parse().map_err(Into::<eyre::Error>::into)?;
 
         Ok(Self {
             base_url,

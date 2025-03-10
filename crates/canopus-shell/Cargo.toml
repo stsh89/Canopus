@@ -6,6 +6,7 @@ edition = { workspace = true }
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
 csv = { workspace = true }
+dotenvy = { workspace = true }
 eyre = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -14,5 +15,5 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 url = { workspace = true }
 uuid = { workspace = true, features = ["serde"] }
 
-canopus-client = { workspace = true }
+canopus-cli = { workspace = true }
 canopus-definitions = { workspace = true }

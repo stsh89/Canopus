@@ -269,6 +269,7 @@ dependencies = [
  "chrono",
  "clap",
  "csv",
+ "dotenvy",
  "eyre",
  "serde",
  "serde_json",
@@ -284,6 +285,7 @@ dependencies = [
  "anyhow",
  "canopus-definitions",
  "clap",
+ "dotenvy",
  "eyre",
  "reqwest",
  "serde",
@@ -350,10 +352,11 @@ dependencies = [
 name = "canopus-shell"
 version = "0.1.0"
 dependencies = [
- "canopus-client",
+ "canopus-cli",
  "canopus-definitions",
  "chrono",
  "csv",
+ "dotenvy",
  "eyre",
  "serde",
  "serde_json",

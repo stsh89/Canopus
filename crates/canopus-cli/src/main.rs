@@ -1,14 +1,7 @@
-// mod formatter;
-// mod session;
-// mod tags;
 mod commands;
-mod display;
 
-use canopus_client::{Client, tags};
+use canopus_cli::CliState;
 use canopus_definitions::Result;
-use clap::Parser;
-use commands::Commands;
-use display::Renderer;
 
 #[tokio::main]
 async fn main() {
@@ -18,30 +11,10 @@ async fn main() {
 }
 
 async fn try_main() -> Result<()> {
-    let Cli { command } = Cli::parse();
+    dotenvy::dotenv().map_err(Into::<eyre::Error>::into)?;
 
-    let client = Client::new()?;
-
-    let renderer = Renderer::new();
-
-    match command {
-        Commands::ShowTag { id } => {
-            let tag = tags::show(&client, id).await?;
-
-            renderer.render(tag);
-        }
-        Commands::ListTags { page_token } => {
-            let page = tags::index(&client, page_token).await?;
-
-            renderer.render(page);
-        }
-    }
+    let state = CliState::new()?;
+    canopus_cli::run(&state).await?;
 
     Ok(())
-}
-
-#[derive(Parser)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
 }

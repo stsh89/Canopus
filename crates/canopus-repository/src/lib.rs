@@ -12,7 +12,7 @@ use canopus_operations::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
         RemarksListing, RemarksListingParameters, UpdateRemark,
     },
-    tags::{GetTag, ListTags, TagsListingParameters},
+    tags::{GetTag, ListTags, ListTagsParameters},
 };
 use chrono::{DateTime, Utc};
 use remarks::RemarkRow;
@@ -109,7 +109,7 @@ impl ListRemarks for Repository {
 impl ListTags for Repository {
     async fn list_tags(
         &self,
-        parameters: TagsListingParameters,
+        parameters: ListTagsParameters,
     ) -> Result<Page<Tag>, ApplicationError> {
         let page = list_tags(self, parameters).await?;
 
@@ -232,9 +232,9 @@ async fn list_remarks(
 
 async fn list_tags(
     repository: &Repository,
-    parameters: TagsListingParameters,
+    parameters: ListTagsParameters,
 ) -> eyre::Result<Page<Tag>> {
-    let TagsListingParameters {
+    let ListTagsParameters {
         page_token: pagination_token,
     } = parameters;
 

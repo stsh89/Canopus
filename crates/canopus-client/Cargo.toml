@@ -18,4 +18,5 @@ canopus-definitions = { workspace = true }
 
 [dev-dependencies]
 clap = { workspace = true, features = ["derive"]}
+dotenvy = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
