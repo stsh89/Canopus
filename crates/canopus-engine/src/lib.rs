@@ -1,24 +1,13 @@
 pub mod remarks;
 pub mod tags;
 
-use canopus_definitions::ApplicationError;
+use canopus_definitions::{ApplicationError, Result};
 use canopus_repository::Repository;
 use sqlx::PgPool;
 use std::env;
 
 pub struct Engine {
     repository: Repository,
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    ApplicationError(#[from] ApplicationError),
-
-    #[error("Internal engine error")]
-    Internal(#[from] eyre::Error),
 }
 
 impl Engine {

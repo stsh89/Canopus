@@ -1,5 +1,4 @@
-use crate::Result;
-use canopus_definitions::Remark;
+use canopus_definitions::{Remark, Result};
 use std::future::Future;
 use uuid::Uuid;
 

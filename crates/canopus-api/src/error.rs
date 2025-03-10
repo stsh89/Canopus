@@ -1,5 +1,4 @@
 use canopus_definitions::ApplicationError;
-use canopus_engine::Error as EngineError;
 use rocket::serde::json::Json;
 
 #[derive(Responder)]
@@ -15,24 +14,6 @@ pub enum Error {
 
     #[response(status = 404, content_type = "json")]
     Unknown(Json<ApplicationError>),
-}
-
-impl From<EngineError> for Error {
-    fn from(value: EngineError) -> Self {
-        match value {
-            EngineError::ApplicationError(application_error) => match application_error {
-                ApplicationError::InvalidArgument { argument, reason } => {
-                    Error::bad_request(ApplicationError::InvalidArgument { argument, reason })
-                }
-                ApplicationError::NotFound { resource, id } => {
-                    Error::not_found(ApplicationError::NotFound { resource, id })
-                }
-                ApplicationError::Internal => Error::internal(),
-                ApplicationError::Unknown => Error::unknown(),
-            },
-            EngineError::Internal(_report) => Error::internal(),
-        }
-    }
 }
 
 impl Error {
@@ -57,5 +38,16 @@ impl Error {
 
     pub fn unknown() -> Self {
         Self::Unknown(Json(ApplicationError::Unknown))
+    }
+}
+
+impl From<ApplicationError> for Error {
+    fn from(value: ApplicationError) -> Self {
+        match value {
+            ApplicationError::InvalidArgument { .. } => Error::bad_request(value),
+            ApplicationError::NotFound { .. } => Error::not_found(value),
+            ApplicationError::Internal => Error::internal(),
+            ApplicationError::Unknown => Error::unknown(),
+        }
     }
 }
