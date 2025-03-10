@@ -1,7 +1,7 @@
 pub mod remarks;
 pub mod tags;
 
-use canopus_definitions::{ApplicationError, Result};
+use canopus_definitions::Result;
 use canopus_repository::Repository;
 use sqlx::PgPool;
 use std::env;

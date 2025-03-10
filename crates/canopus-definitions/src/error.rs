@@ -36,7 +36,7 @@ impl ApplicationError {
 impl From<eyre::Error> for ApplicationError {
     fn from(value: eyre::Error) -> Self {
         // TODO: Replace with tracing
-        eprintln!("Error: {:?}", value);
+        eprintln!("{:?}", value);
 
         ApplicationError::Internal("something went wrong".to_string())
     }

@@ -6,9 +6,9 @@ mod display;
 
 use canopus_client::{Client, tags};
 use canopus_definitions::Result;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use commands::Commands;
-use display::{RenderOptions, Renderer};
+use display::Renderer;
 
 #[tokio::main]
 async fn main() {
@@ -18,13 +18,11 @@ async fn main() {
 }
 
 async fn try_main() -> Result<()> {
-    let Cli { command, format } = Cli::parse();
+    let Cli { command } = Cli::parse();
 
     let client = Client::new()?;
 
-    let renderer = Renderer::new(RenderOptions {
-        format: format.into(),
-    });
+    let renderer = Renderer::new();
 
     match command {
         Commands::ShowTag { id } => {
@@ -46,22 +44,4 @@ async fn try_main() -> Result<()> {
 struct Cli {
     #[command(subcommand)]
     command: Commands,
-
-    #[arg(short, long, default_value_t = Format::Text)]
-    format: Format,
-}
-
-#[derive(Clone, ValueEnum)]
-enum Format {
-    Text,
-    Json,
-}
-
-impl std::fmt::Display for Format {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Format::Text => f.write_str("text"),
-            Format::Json => f.write_str("json"),
-        }
-    }
 }
