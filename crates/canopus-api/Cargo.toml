@@ -6,6 +6,7 @@ edition = { workspace = true }
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true }
+eyre = { workspace = true }
 rocket = { workspace = true, features = ["json"] }
 uuid = { workspace = true }
 

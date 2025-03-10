@@ -22,5 +22,5 @@ pub async fn show(engine: &State<Engine>, id: &str) -> Result<Json<Tag>, Error> 
 
     let tag = tags::get_tag(engine, id).await?;
 
-    Ok(Json(tag.into()))
+    Ok(Json(tag))
 }

@@ -25,5 +25,5 @@ async fn main() -> anyhow::Result<()> {
 
 #[catch(404)]
 fn not_found(_req: &Request) -> Error {
-    Error::unknown()
+    Error::internal(eyre::Error::msg("Unmatched route").into())
 }

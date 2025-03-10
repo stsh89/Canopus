@@ -1,14 +1,8 @@
 pub mod tags;
 
-mod error;
-
-pub use error::Error;
-
-use canopus_definitions::ApplicationError;
+use canopus_definitions::{ApplicationError, Result};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-
-pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
@@ -32,7 +26,7 @@ impl Client {
             base_url,
             inner: reqwest::Client::builder()
                 .build()
-                .map_err(eyre::Error::new)?,
+                .map_err(Into::<eyre::Error>::into)?,
         })
     }
 
@@ -50,7 +44,7 @@ impl<T> From<ApiResponse<T>> for Result<T> {
     fn from(value: ApiResponse<T>) -> Self {
         match value {
             ApiResponse::Ok(value) => Ok(value),
-            ApiResponse::Err(err) => Err(Error::Application(err)),
+            ApiResponse::Err(err) => Err(err),
         }
     }
 }

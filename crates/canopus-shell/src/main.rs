@@ -2,8 +2,8 @@ mod commands;
 mod resources;
 
 use canopus_client::{Client, tags};
-use canopus_definitions::{ApplicationError, Tag};
-use commands::{Commands, Error as CommandError};
+use canopus_definitions::{ApplicationError, Result, Tag};
+use commands::Commands;
 use resources::Resources;
 use std::io::{Stdin, Stdout};
 use uuid::Uuid;
@@ -29,8 +29,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-type Result<T> = std::result::Result<T, Error>;
-
 struct Shell {
     client: Client,
     stdout: Stdout,
@@ -43,18 +41,6 @@ enum ShellInput {
     Command(Commands),
 }
 
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error(transparent)]
-    Application(ApplicationError),
-
-    #[error(transparent)]
-    Command(#[from] CommandError),
-
-    #[error(r#"Internal shell error. Try to start shell again"#)]
-    Internal(#[source] eyre::Error),
-}
-
 impl Shell {
     async fn evaluate(&mut self, input: &str) -> Result<bool> {
         match input.parse::<ShellInput>()? {
@@ -63,9 +49,7 @@ impl Shell {
                 Commands::Help => print_help(&mut self.stdout)?,
             },
             ShellInput::Query(query) => {
-                let id: Uuid = query
-                    .parse()
-                    .map_err(|_err| Error::Internal(eyre::Error::msg("Invalid UUID")))?;
+                let id: Uuid = query.parse().map_err(Into::<eyre::Error>::into)?;
 
                 let tag = tags::show(&self.client, id).await?;
 
@@ -106,16 +90,14 @@ impl Shell {
 
         self.stdout
             .write_all(self.prompt().as_bytes())
-            .map_err(|err| Error::Internal(eyre::Error::new(err)))?;
+            .map_err(Into::<eyre::Error>::into)?;
 
-        self.stdout
-            .flush()
-            .map_err(|err| Error::Internal(eyre::Error::new(err)))?;
+        self.stdout.flush().map_err(Into::<eyre::Error>::into)?;
 
         let mut buffer = String::new();
 
         if let Err(err) = self.stdin.read_line(&mut buffer) {
-            return Err(Error::Internal(eyre::Error::new(err)));
+            return Err(eyre::Error::from(err).into());
         };
 
         Ok(buffer)
@@ -149,31 +131,21 @@ fn print_message(stdout: &mut Stdout, message: impl std::fmt::Display) -> Result
 
     stdout
         .write_all(message.as_bytes())
-        .map_err(|err| Error::Internal(eyre::Error::new(err)))?;
+        .map_err(Into::<eyre::Error>::into)?;
 
     Ok(())
 }
 
 impl std::str::FromStr for ShellInput {
-    type Err = Error;
+    type Err = ApplicationError;
 
     fn from_str(s: &str) -> Result<Self> {
         if s.starts_with(".") {
-            let command = s.parse()?;
+            let command = s.parse().map_err(Into::<eyre::Error>::into)?;
 
             return Ok(Self::Command(command));
         }
 
         Ok(Self::Query(s.to_string()))
-    }
-}
-
-impl From<canopus_client::Error> for Error {
-    fn from(value: canopus_client::Error) -> Self {
-        match value {
-            canopus_client::Error::Connection => todo!(),
-            canopus_client::Error::Application(err) => Self::Application(err),
-            canopus_client::Error::Internal(report) => todo!(),
-        }
     }
 }

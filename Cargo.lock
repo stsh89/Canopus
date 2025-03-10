@@ -255,6 +255,7 @@ dependencies = [
  "canopus-definitions",
  "canopus-engine",
  "chrono",
+ "eyre",
  "rocket",
  "uuid",
 ]

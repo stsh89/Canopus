@@ -3,14 +3,12 @@
 // mod tags;
 mod commands;
 mod display;
-mod error;
 
 use canopus_client::{Client, tags};
+use canopus_definitions::Result;
 use clap::{Parser, ValueEnum};
 use commands::Commands;
 use display::{RenderOptions, Renderer};
-
-type Result<T> = std::result::Result<T, error::Error>;
 
 #[tokio::main]
 async fn main() {

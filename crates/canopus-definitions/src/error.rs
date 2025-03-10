@@ -4,17 +4,17 @@ use uuid::Uuid;
 #[derive(thiserror::Error, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ApplicationError {
-    #[error("Invalid argument error. {argument} {reason}")]
+    #[error("Invalid argument error: {argument} {reason}")]
+    #[serde(rename = "invalid_argument_error")]
     InvalidArgument { argument: String, reason: String },
 
-    #[error("Not found error. {resource} with ID {id} not found")]
+    #[error("Not found error: {resource} with ID {id} not found")]
+    #[serde(rename = "not_found_error")]
     NotFound { resource: String, id: Uuid },
 
-    #[error("Internal application error. Something went wrong")]
-    Internal,
-
-    #[error("Unknown application error.")]
-    Unknown,
+    #[error("Internal error: {0}")]
+    #[serde(rename = "internal_error")]
+    Internal(String),
 }
 
 impl ApplicationError {
@@ -36,8 +36,8 @@ impl ApplicationError {
 impl From<eyre::Error> for ApplicationError {
     fn from(value: eyre::Error) -> Self {
         // TODO: Replace with tracing
-        eprintln!("Error: {}", value);
+        eprintln!("Error: {:?}", value);
 
-        ApplicationError::Internal
+        ApplicationError::Internal("something went wrong".to_string())
     }
 }
