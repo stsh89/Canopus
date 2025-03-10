@@ -4,10 +4,7 @@ use uuid::Uuid;
 use crate::{ApiResponse, Client, Result};
 
 pub async fn show(client: &Client, id: Uuid) -> Result<Tag> {
-    let url = client
-        .base_url
-        .join(&format!("/tags/{}", id))
-        .map_err(Into::<eyre::Error>::into)?;
+    let url = client.tags_url()?;
 
     client
         .inner
@@ -21,7 +18,7 @@ pub async fn show(client: &Client, id: Uuid) -> Result<Tag> {
 
 pub async fn index(client: &Client, page_token: Option<String>) -> Result<Page<Tag>> {
     let mut url = client
-        .base_url
+        .tags_url()?
         .join("/tags")
         .map_err(Into::<eyre::Error>::into)?;
 

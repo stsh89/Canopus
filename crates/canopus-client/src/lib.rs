@@ -35,6 +35,15 @@ impl Client {
                 .map_err(eyre::Error::new)?,
         })
     }
+
+    fn tags_url(&self) -> Result<Url> {
+        let url = self
+            .base_url
+            .join("/tags")
+            .map_err(Into::<eyre::Error>::into)?;
+
+        Ok(url)
+    }
 }
 
 impl<T> From<ApiResponse<T>> for Result<T> {
