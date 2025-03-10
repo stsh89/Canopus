@@ -1,4 +1,4 @@
-use canopus_client::Client;
+use canopus_client::{Client, tags};
 use clap::{Parser, Subcommand, command};
 use uuid::Uuid;
 
@@ -34,12 +34,12 @@ async fn try_main() -> anyhow::Result<()> {
 
     match command {
         Commands::Show { id } => {
-            let tag = client.show_tag(id).await?;
+            let tag = tags::show(&client, id).await?;
 
             println!("{}", tag);
         }
         Commands::List { page_token } => {
-            let page = client.list_tags(page_token).await?;
+            let page = tags::index(&client, page_token).await?;
 
             println!("{}", page);
         }

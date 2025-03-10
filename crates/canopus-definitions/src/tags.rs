@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Tag {
     id: Uuid,
     title: TagTitle,
@@ -17,7 +17,7 @@ pub struct TagAttributes {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TagTitle(String);
 
 impl Tag {

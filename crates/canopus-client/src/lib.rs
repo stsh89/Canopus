@@ -1,39 +1,25 @@
-use canopus_definitions::{ApplicationError, Page, Tag};
+pub mod tags;
+
+mod error;
+
+pub use error::Error;
+
+use canopus_definitions::ApplicationError;
 use reqwest::Url;
-use serde::Deserialize;
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum ApiResponse<T> {
+    Ok(T),
+    Err(ApplicationError),
+}
 
 pub struct Client {
     inner: reqwest::Client,
     base_url: Url,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("Connection error. Check if server is up and running")]
-    Connection,
-
-    #[error(transparent)]
-    Application(#[from] ApplicationError),
-
-    #[error("Internal client error")]
-    Internal(#[from] eyre::Error),
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum GetTagResponse {
-    Ok(Tag),
-    Err(ApplicationError),
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum ListTagsResponse {
-    Ok(Page<Tag>),
-    Err(ApplicationError),
 }
 
 impl Client {
@@ -49,58 +35,13 @@ impl Client {
                 .map_err(eyre::Error::new)?,
         })
     }
-
-    pub async fn show_tag(&self, id: Uuid) -> Result<Tag> {
-        let url = self
-            .base_url
-            .join(&format!("/tags/{}", id))
-            .map_err(Into::<eyre::Error>::into)?;
-
-        let response = self
-            .inner
-            .get(url)
-            .send()
-            .await?
-            .json::<GetTagResponse>()
-            .await?;
-
-        match response {
-            GetTagResponse::Ok(tag) => Ok(tag.into()),
-            GetTagResponse::Err(err) => Err(err.into()),
-        }
-    }
-
-    pub async fn list_tags(&self, page_token: Option<String>) -> Result<Page<Tag>> {
-        let mut url = self
-            .base_url
-            .join("/tags")
-            .map_err(Into::<eyre::Error>::into)?;
-
-        if let Some(page_token) = page_token {
-            url.set_query(Some(&format!("page_token={}", page_token)));
-        }
-
-        let response = self
-            .inner
-            .get(url)
-            .send()
-            .await?
-            .json::<ListTagsResponse>()
-            .await?;
-
-        match response {
-            ListTagsResponse::Ok(page) => Ok(page.into()),
-            ListTagsResponse::Err(err) => Err(err.into()),
-        }
-    }
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(value: reqwest::Error) -> Self {
-        if value.is_connect() {
-            Error::Connection
-        } else {
-            Self::Internal(value.into())
+impl<T> From<ApiResponse<T>> for Result<T> {
+    fn from(value: ApiResponse<T>) -> Self {
+        match value {
+            ApiResponse::Ok(value) => Ok(value),
+            ApiResponse::Err(err) => Err(Error::Application(err)),
         }
     }
 }

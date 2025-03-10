@@ -1,7 +1,7 @@
 mod commands;
 mod resources;
 
-use canopus_client::{Client, Error as ClientError};
+use canopus_client::{Client, tags};
 use canopus_definitions::{ApplicationError, Tag};
 use commands::{Commands, Error as CommandError};
 use resources::Resources;
@@ -67,19 +67,13 @@ impl Shell {
                     .parse()
                     .map_err(|_err| Error::Internal(eyre::Error::msg("Invalid UUID")))?;
 
-                let tag = self.get_tag(id).await?;
+                let tag = tags::show(&self.client, id).await?;
 
                 print_tag(&mut self.stdout, tag)?
             }
         };
 
         Ok(false)
-    }
-
-    async fn get_tag(&self, id: Uuid) -> Result<Tag> {
-        let tag = self.client.show_tag(id).await?;
-
-        Ok(tag)
     }
 
     fn prompt(&self) -> String {
@@ -174,12 +168,12 @@ impl std::str::FromStr for ShellInput {
     }
 }
 
-impl From<ClientError> for Error {
-    fn from(value: ClientError) -> Self {
+impl From<canopus_client::Error> for Error {
+    fn from(value: canopus_client::Error) -> Self {
         match value {
-            ClientError::Connection => todo!(),
-            ClientError::Application(err) => Self::Application(err),
-            ClientError::Internal(report) => todo!(),
+            canopus_client::Error::Connection => todo!(),
+            canopus_client::Error::Application(err) => Self::Application(err),
+            canopus_client::Error::Internal(report) => todo!(),
         }
     }
 }

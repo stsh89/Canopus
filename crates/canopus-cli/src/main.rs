@@ -5,7 +5,7 @@ mod commands;
 mod display;
 mod error;
 
-use canopus_client::Client;
+use canopus_client::{Client, tags};
 use clap::{Parser, ValueEnum};
 use commands::Commands;
 use display::{RenderOptions, Renderer};
@@ -30,12 +30,12 @@ async fn try_main() -> Result<()> {
 
     match command {
         Commands::ShowTag { id } => {
-            let tag = client.show_tag(id).await?;
+            let tag = tags::show(&client, id).await?;
 
             renderer.render(tag);
         }
         Commands::ListTags { page_token } => {
-            let page = client.list_tags(page_token).await?;
+            let page = tags::index(&client, page_token).await?;
 
             renderer.render(page);
         }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Page<T>
 where
     T: Serialize,
@@ -11,7 +11,7 @@ where
     pub next_page_token: Option<PageToken>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PageToken(String);
 
 impl std::ops::Deref for PageToken {
