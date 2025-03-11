@@ -4,9 +4,9 @@ use uuid::Uuid;
 #[derive(thiserror::Error, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ApplicationError {
-    #[error("Invalid argument error: {argument} {reason}")]
+    #[error("{0}")]
     #[serde(rename = "invalid_argument_error")]
-    InvalidArgument { argument: String, reason: String },
+    InvalidArgument(String),
 
     #[error("Not found error: {resource} with ID {id} not found")]
     #[serde(rename = "not_found_error")]
@@ -32,11 +32,8 @@ impl ApplicationError {
         }
     }
 
-    pub fn invalid_argument(argument: &str, reason: &str) -> Self {
-        ApplicationError::InvalidArgument {
-            argument: argument.to_string(),
-            reason: reason.to_string(),
-        }
+    pub fn invalid_argument(description: &str) -> Self {
+        ApplicationError::InvalidArgument(description.to_string())
     }
 }
 

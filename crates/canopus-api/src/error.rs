@@ -23,10 +23,9 @@ impl Error {
     }
 
     pub fn invalid_id() -> Self {
-        Self::InvalidArgument(Json(ApplicationError::InvalidArgument {
-            argument: "ID".to_string(),
-            reason: "is not a valid UUID".to_string(),
-        }))
+        Self::InvalidArgument(Json(ApplicationError::invalid_argument(
+            "ID is not a valid UUID",
+        )))
     }
 
     pub fn internal(err: ApplicationError) -> Self {

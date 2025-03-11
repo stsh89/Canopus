@@ -2,8 +2,8 @@ mod commands;
 mod display;
 
 use canopus_client::{Client, tags};
-use canopus_definitions::Result;
-use clap::Parser;
+use canopus_definitions::{ApplicationError, Result};
+use clap::{Parser, error::ErrorKind};
 use commands::Commands;
 use display::Renderer;
 use std::env;
@@ -24,7 +24,7 @@ impl CliState {
 }
 
 pub async fn run(state: &CliState) -> Result<()> {
-    let cli = Cli::try_parse().map_err(Into::<eyre::Error>::into)?;
+    let cli = Cli::try_parse().map_err(map_clap_error)?;
 
     execute(cli, state).await?;
 
@@ -32,9 +32,7 @@ pub async fn run(state: &CliState) -> Result<()> {
 }
 
 pub async fn run_from(state: &CliState, args: Vec<&str>) -> Result<()> {
-    println!("{:?}", args);
-
-    let cli = Cli::try_parse_from(args).map_err(Into::<eyre::Error>::into)?;
+    let cli = Cli::try_parse_from(args).map_err(map_clap_error)?;
 
     execute(cli, state).await?;
 
@@ -65,4 +63,17 @@ async fn execute(cli: Cli, state: &CliState) -> Result<()> {
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+}
+
+fn map_clap_error(err: clap::Error) -> ApplicationError {
+    match err.kind() {
+        ErrorKind::InvalidSubcommand
+        | ErrorKind::ValueValidation
+        | ErrorKind::InvalidValue
+        | ErrorKind::InvalidUtf8
+        | ErrorKind::DisplayHelp
+        | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+        | ErrorKind::DisplayVersion => ApplicationError::InvalidArgument(err.to_string()),
+        _ => eyre::Error::from(err).into(),
+    }
 }
