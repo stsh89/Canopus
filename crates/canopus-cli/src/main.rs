@@ -1,20 +1,13 @@
-mod commands;
-
-use canopus_cli::CliState;
-use canopus_definitions::Result;
+use canopus_cli::{App, Cli};
+use eyre::Context;
 
 #[tokio::main]
-async fn main() {
-    if let Err(e) = try_main().await {
-        eprintln!("{}", e);
-    }
-}
+async fn main() -> eyre::Result<()> {
+    dotenvy::dotenv().wrap_err_with(|| "Failed to load .env file")?;
 
-async fn try_main() -> Result<()> {
-    dotenvy::dotenv().map_err(Into::<eyre::Error>::into)?;
+    let cli = Cli::new()?;
 
-    let state = CliState::new()?;
-    canopus_cli::run(&state).await?;
+    App::initialize()?.execute(cli).await?;
 
     Ok(())
 }
