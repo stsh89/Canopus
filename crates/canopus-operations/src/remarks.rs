@@ -1,11 +1,6 @@
-use canopus_definitions::{ApplicationResult, Remark};
+use canopus_definitions::{ApplicationResult, Page, Remark};
 use std::future::Future;
 use uuid::Uuid;
-
-pub struct RemarksListing {
-    pub remarks: Vec<Remark>,
-    pub pagination_token: Option<String>,
-}
 
 pub struct RemarkUpdates {
     pub id: Uuid,
@@ -27,7 +22,7 @@ impl RemarkUpdates {
 
 #[derive(Default)]
 pub struct RemarksListingParameters {
-    pub pagination_token: Option<String>,
+    pub page_token: Option<String>,
 }
 
 pub trait DeleteRemark {
@@ -53,8 +48,8 @@ pub trait UpdateRemark {
 pub trait ListRemarks {
     fn list_remarks(
         &self,
-        listing_parameters: RemarksListingParameters,
-    ) -> impl Future<Output = ApplicationResult<RemarksListing>>;
+        parameters: RemarksListingParameters,
+    ) -> impl Future<Output = ApplicationResult<Page<Remark>>>;
 }
 
 #[tracing::instrument(skip_all)]
@@ -88,7 +83,7 @@ pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> ApplicationRes
 pub async fn list_remarks(
     parameters: RemarksListingParameters,
     repository: &impl ListRemarks,
-) -> ApplicationResult<RemarksListing> {
+) -> ApplicationResult<Page<Remark>> {
     repository.list_remarks(parameters).await
 }
 

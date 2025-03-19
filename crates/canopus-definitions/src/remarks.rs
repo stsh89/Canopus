@@ -1,7 +1,9 @@
 use crate::Tag;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Remark {
     id: Uuid,
     essence: RemarkEssence,
@@ -18,6 +20,7 @@ pub struct RemarkAttributes {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RemarkEssence(String);
 
 impl Remark {

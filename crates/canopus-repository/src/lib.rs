@@ -6,11 +6,11 @@ use base64::{
     alphabet,
     engine::{GeneralPurpose, general_purpose},
 };
-use canopus_definitions::{ApplicationError, Page, PageToken, Remark, Tag};
+use canopus_definitions::{ApplicationError, ApplicationResult, Page, PageToken, Remark, Tag};
 use canopus_operations::{
     remarks::{
         DeleteRemark, GetRemark, InsertRemark, ListRemarks, NewRemark, RemarkUpdates,
-        RemarksListing, RemarksListingParameters, UpdateRemark,
+        RemarksListingParameters, UpdateRemark,
     },
     tags::{GetTag, ListTags, ListTagsParameters},
 };
@@ -103,7 +103,7 @@ impl ListRemarks for Repository {
     async fn list_remarks(
         &self,
         parameters: RemarksListingParameters,
-    ) -> Result<RemarksListing, ApplicationError> {
+    ) -> ApplicationResult<Page<Remark>> {
         list_remarks(self, parameters)
             .await
             .map_err(|err| from_eyre("failed to list remarks", err))
@@ -151,7 +151,7 @@ fn from_eyre(description: &str, report: eyre::Error) -> ApplicationError {
     ApplicationError::from_eyre(SUBSYSTEM_NAME, description, report)
 }
 
-fn build_remarks_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
+fn build_remarks_page_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
     if rows.len() < DEFAULT_PAGE_SIZE as usize {
         return None;
     }
@@ -162,7 +162,7 @@ fn build_remarks_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken>
     })
 }
 
-fn build_tags_pagination_token(rows: &[TagRow]) -> Option<PaginationToken> {
+fn build_tags_page_token(rows: &[TagRow]) -> Option<PaginationToken> {
     if rows.len() < DEFAULT_PAGE_SIZE as usize {
         return None;
     }
@@ -219,8 +219,10 @@ async fn get_tag(repository: &Repository, id: Uuid) -> sqlx::Result<Tag> {
 async fn list_remarks(
     repository: &Repository,
     parameters: RemarksListingParameters,
-) -> eyre::Result<RemarksListing> {
-    let RemarksListingParameters { pagination_token } = parameters;
+) -> eyre::Result<Page<Remark>> {
+    let RemarksListingParameters {
+        page_token: pagination_token,
+    } = parameters;
 
     let pagination_token = pagination_token
         .map(PaginationToken::from_string)
@@ -228,13 +230,14 @@ async fn list_remarks(
 
     let rows = remarks::list_remarks(&repository.pool, pagination_token).await?;
 
-    let pagination_token = build_remarks_pagination_token(&rows)
+    let next_page_token = build_remarks_page_token(&rows)
         .map(|token| token.to_string())
-        .transpose()?;
+        .transpose()?
+        .map(Into::<PageToken>::into);
 
-    Ok(RemarksListing {
-        pagination_token,
-        remarks: rows.into_iter().map(Into::into).collect(),
+    Ok(Page {
+        next_page_token,
+        items: rows.into_iter().map(Into::into).collect(),
     })
 }
 
@@ -252,13 +255,13 @@ async fn list_tags(
 
     let rows = tags::list_tags(&repository.pool, pagination_token).await?;
 
-    let pagination_token = build_tags_pagination_token(&rows)
+    let next_page_token = build_tags_page_token(&rows)
         .map(|token| token.to_string())
         .transpose()?
         .map(Into::<PageToken>::into);
 
     Ok(Page {
-        next_page_token: pagination_token,
+        next_page_token,
         items: rows.into_iter().map(Into::into).collect(),
     })
 }

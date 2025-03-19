@@ -1,8 +1,6 @@
 use crate::Engine;
-use canopus_definitions::{ApplicationResult, Remark};
-use canopus_operations::remarks::{
-    self, NewRemark, RemarkUpdates, RemarksListing, RemarksListingParameters,
-};
+use canopus_definitions::{ApplicationResult, Page, Remark};
+use canopus_operations::remarks::{self, NewRemark, RemarkUpdates, RemarksListingParameters};
 use uuid::Uuid;
 
 pub async fn create_remark(engine: &Engine, new_remark: NewRemark) -> ApplicationResult<Uuid> {
@@ -32,12 +30,12 @@ pub async fn get_remark(engine: &Engine, id: Uuid) -> ApplicationResult<Remark> 
 pub async fn list_remarks(
     engine: &Engine,
     parameters: RemarksListingParameters,
-) -> ApplicationResult<RemarksListing> {
+) -> ApplicationResult<Page<Remark>> {
     let Engine { repository } = engine;
 
-    let remarks = remarks::list_remarks(parameters, repository).await?;
+    let page = remarks::list_remarks(parameters, repository).await?;
 
-    Ok(remarks)
+    Ok(page)
 }
 
 pub async fn update_remark(engine: &Engine, parameters: RemarkUpdates) -> ApplicationResult<()> {

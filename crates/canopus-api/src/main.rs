@@ -1,4 +1,5 @@
 mod error;
+mod remarks;
 mod tags;
 mod tracing;
 
@@ -18,6 +19,7 @@ async fn main() -> eyre::Result<()> {
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
         .mount("/tags", routes![tags::show])
+        .mount("/remarks", routes![remarks::index])
         .register("/", catchers![not_found])
         .manage(engine)
         .launch()
