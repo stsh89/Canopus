@@ -5,15 +5,12 @@ use uuid::Uuid;
 #[serde(rename_all = "snake_case")]
 pub enum ApplicationError {
     #[error("{0}")]
-    #[serde(rename = "invalid_argument_error")]
     InvalidArgument(String),
 
     #[error("{resource} with ID {id} not found")]
-    #[serde(rename = "not_found_error")]
     NotFound { resource: String, id: Uuid },
 
     #[error("{subsystem} {description}. Details: {details}")]
-    #[serde(rename = "internal_error")]
     Internal {
         subsystem: String,
         description: String,
@@ -21,7 +18,6 @@ pub enum ApplicationError {
     },
 
     #[error("The operation is not implemented or is not supported/enabled in this service.")]
-    #[serde(rename = "unimplemented_error")]
     Unimplemented,
 }
 
