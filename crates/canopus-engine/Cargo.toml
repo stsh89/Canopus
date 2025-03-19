@@ -10,7 +10,6 @@ name = "canopus_engine"
 dotenvy = { workspace = true }
 eyre = { workspace = true }
 sqlx = { workspace = true }
-thiserror = { workspace = true }
 uuid = { workspace = true }
 
 canopus-definitions = { workspace = true }
