@@ -1,4 +1,4 @@
-use crate::{from_eyre, get, Client, Path, Resource};
+use crate::{Client, Path, Resource, from_eyre, get};
 use canopus_definitions::{ApplicationResult, Page, Tag};
 use uuid::Uuid;
 
