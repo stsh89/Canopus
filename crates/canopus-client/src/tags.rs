@@ -1,41 +1,41 @@
-use canopus_definitions::{Page, Result, Tag};
+use crate::{from_eyre, get, Client, Path, Resource};
+use canopus_definitions::{ApplicationResult, Page, Tag};
 use uuid::Uuid;
 
-use crate::{ApiResponse, Client};
+#[tracing::instrument(skip(client), err(Debug), name = "Request tags page")]
+pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationResult<Page<Tag>> {
+    let Client { base_url, inner } = client;
 
-pub async fn show(client: &Client, id: Uuid) -> Result<Tag> {
-    let url = client
-        .tags_url()?
-        .join(&format!("/tags/{}", id))
-        .map_err(Into::<eyre::Error>::into)?;
+    let query = page_token
+        .as_deref()
+        .map(|token| vec![("page_token", token)]);
 
-    client
-        .inner
-        .get(url)
-        .send()
-        .await
-        .map_err(Into::<eyre::Error>::into)?
-        .json::<ApiResponse<Tag>>()
-        .await
-        .map_err(Into::<eyre::Error>::into)?
-        .into()
+    get(
+        inner,
+        Resource {
+            base_url,
+            path: Path::Tags,
+        },
+        query.as_deref(),
+    )
+    .await
+    .map_err(|err| from_eyre("failed to request tags page", err))?
+    .into()
 }
 
-pub async fn index(client: &Client, page_token: Option<String>) -> Result<Page<Tag>> {
-    let mut url = client.tags_url()?;
+#[tracing::instrument(skip(client), err(Debug), name = "Request tag")]
+pub async fn show(client: &Client, id: Uuid) -> ApplicationResult<Tag> {
+    let Client { base_url, inner } = client;
 
-    if let Some(page_token) = page_token {
-        url.set_query(Some(&format!("page_token={}", page_token)));
-    }
-
-    client
-        .inner
-        .get(url)
-        .send()
-        .await
-        .map_err(Into::<eyre::Error>::into)?
-        .json::<ApiResponse<Page<Tag>>>()
-        .await
-        .map_err(Into::<eyre::Error>::into)?
-        .into()
+    get(
+        inner,
+        Resource {
+            base_url,
+            path: Path::Tag(id),
+        },
+        None,
+    )
+    .await
+    .map_err(|err| from_eyre("failed to request tag", err))?
+    .into()
 }
