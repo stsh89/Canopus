@@ -12,5 +12,15 @@ services:
     # Uncomment to enable logging of all queries
     # command: ["postgres", "-c", "log_statement=all"]
 
+  jaeger:
+    image: "jaegertracing/jaeger:2.4.0"
+    container_name: canopus_jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - LOG_LEVEL=debug
+
 volumes:
-  db_data:
+  db_data: {}
