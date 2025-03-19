@@ -8,13 +8,21 @@ pub enum ApplicationError {
     #[serde(rename = "invalid_argument_error")]
     InvalidArgument(String),
 
-    #[error("Not found error: {resource} with ID {id} not found")]
+    #[error("{resource} with ID {id} not found")]
     #[serde(rename = "not_found_error")]
     NotFound { resource: String, id: Uuid },
 
-    #[error("Internal error: {0}")]
+    #[error("{subsystem} {description}. Details: {details}")]
     #[serde(rename = "internal_error")]
-    Internal(String),
+    Internal {
+        subsystem: String,
+        description: String,
+        details: String,
+    },
+
+    #[error("The operation is not implemented or is not supported/enabled in this service.")]
+    #[serde(rename = "unimplemented_error")]
+    Unimplemented,
 }
 
 impl ApplicationError {
@@ -35,13 +43,12 @@ impl ApplicationError {
     pub fn invalid_argument(description: &str) -> Self {
         ApplicationError::InvalidArgument(description.to_string())
     }
-}
 
-impl From<eyre::Error> for ApplicationError {
-    fn from(value: eyre::Error) -> Self {
-        // TODO: Replace with tracing
-        eprintln!("{:?}", value);
-
-        ApplicationError::Internal("something went wrong".to_string())
+    pub fn from_eyre(subsystem: &str, descripton: &str, report: eyre::Report) -> Self {
+        ApplicationError::Internal {
+            subsystem: subsystem.to_string(),
+            description: descripton.to_string(),
+            details: format!("{:?}", report),
+        }
     }
 }
