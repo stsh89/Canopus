@@ -2,7 +2,6 @@ use crate::{Client, Path, Resource, from_eyre, get};
 use canopus_definitions::{ApplicationResult, Page, Tag};
 use uuid::Uuid;
 
-#[tracing::instrument(skip(client), err(Debug), name = "Request tags page")]
 pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationResult<Page<Tag>> {
     let Client { base_url, inner } = client;
 
@@ -23,7 +22,6 @@ pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationRe
     .into()
 }
 
-#[tracing::instrument(skip(client), err(Debug), name = "Request tag")]
 pub async fn show(client: &Client, id: Uuid) -> ApplicationResult<Tag> {
     let Client { base_url, inner } = client;
 

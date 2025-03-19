@@ -57,6 +57,7 @@ impl PaginationToken {
 }
 
 impl DeleteRemark for Repository {
+    #[tracing::instrument(skip_all)]
     async fn delete_remark(&self, id: Uuid) -> Result<(), ApplicationError> {
         delete_remark(self, id)
             .await
@@ -65,6 +66,7 @@ impl DeleteRemark for Repository {
 }
 
 impl GetRemark for Repository {
+    #[tracing::instrument(skip_all)]
     async fn get_remark(&self, remark_id: Uuid) -> Result<Remark, ApplicationError> {
         let remark = get_remark(self, remark_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::remark_not_found(remark_id),
@@ -76,7 +78,7 @@ impl GetRemark for Repository {
 }
 
 impl GetTag for Repository {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_tag(&self, tag_id: Uuid) -> Result<Tag, ApplicationError> {
         let tag = get_tag(self, tag_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::tag_not_found(tag_id),
@@ -88,6 +90,7 @@ impl GetTag for Repository {
 }
 
 impl InsertRemark for Repository {
+    #[tracing::instrument(skip_all)]
     async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid, ApplicationError> {
         save_remark(self, new_remark)
             .await
@@ -96,6 +99,7 @@ impl InsertRemark for Repository {
 }
 
 impl ListRemarks for Repository {
+    #[tracing::instrument(skip_all)]
     async fn list_remarks(
         &self,
         parameters: RemarksListingParameters,
@@ -107,6 +111,7 @@ impl ListRemarks for Repository {
 }
 
 impl ListTags for Repository {
+    #[tracing::instrument(skip_all)]
     async fn list_tags(
         &self,
         parameters: ListTagsParameters,
@@ -118,6 +123,7 @@ impl ListTags for Repository {
 }
 
 impl UpdateRemark for Repository {
+    #[tracing::instrument(skip_all)]
     async fn update_remark(&self, parameters: RemarkUpdates) -> Result<(), ApplicationError> {
         update_remark(self, parameters)
             .await

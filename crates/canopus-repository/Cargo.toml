@@ -13,7 +13,6 @@ eyre = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "chrono", "uuid"] }
-thiserror = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true, features = ["serde"] }
 

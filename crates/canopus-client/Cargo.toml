@@ -10,8 +10,6 @@ name = "canopus_client"
 eyre = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
-thiserror = { workspace = true }
-tracing = { workspace = true }
 uuid = { workspace = true }
 
 canopus-definitions = { workspace = true }
