@@ -1,7 +1,7 @@
 use canopus_definitions::ApplicationError;
 use rocket::serde::json::Json;
 
-#[derive(Responder)]
+#[derive(Debug, Responder)]
 pub enum Error {
     #[response(status = 400, content_type = "json")]
     InvalidArgument(Json<ApplicationError>),
@@ -11,6 +11,9 @@ pub enum Error {
 
     #[response(status = 404, content_type = "json")]
     NotFound(Json<ApplicationError>),
+
+    #[response(status = 501, content_type = "json")]
+    Unimplemented(Json<ApplicationError>),
 }
 
 impl Error {
@@ -38,7 +41,8 @@ impl From<ApplicationError> for Error {
         match value {
             ApplicationError::InvalidArgument { .. } => Error::bad_request(value),
             ApplicationError::NotFound { .. } => Error::not_found(value),
-            ApplicationError::Internal(_) => Error::internal(value),
+            ApplicationError::Internal { .. } => Error::internal(value),
+            ApplicationError::Unimplemented => Error::Unimplemented(Json(value)),
         }
     }
 }

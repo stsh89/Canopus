@@ -1,15 +1,18 @@
 mod error;
 mod tags;
+mod tracing;
 
+use canopus_definitions::ApplicationError;
 use canopus_engine::Engine;
 use error::Error;
-use rocket::Request;
+use rocket::{Request, serde::json::Json};
 
 #[macro_use]
 extern crate rocket;
 
 #[rocket::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> eyre::Result<()> {
+    let _guard = tracing::init_subscriber();
     let engine = Engine::start().await?;
 
     let _rocket = rocket::build()
@@ -25,5 +28,5 @@ async fn main() -> anyhow::Result<()> {
 
 #[catch(404)]
 fn not_found(_req: &Request) -> Error {
-    Error::internal(eyre::Error::msg("Unmatched route").into())
+    Error::Unimplemented(Json(ApplicationError::Unimplemented))
 }
