@@ -1,4 +1,4 @@
-use canopus_definitions::{Remark, Result};
+use canopus_definitions::{ApplicationResult, Remark};
 use std::future::Future;
 use uuid::Uuid;
 
@@ -31,29 +31,37 @@ pub struct RemarksListingParameters {
 }
 
 pub trait DeleteRemark {
-    fn delete_remark(&self, id: Uuid) -> impl Future<Output = Result<()>>;
+    fn delete_remark(&self, id: Uuid) -> impl Future<Output = ApplicationResult<()>>;
 }
 
 pub trait GetRemark {
-    fn get_remark(&self, id: Uuid) -> impl Future<Output = Result<Remark>>;
+    fn get_remark(&self, id: Uuid) -> impl Future<Output = ApplicationResult<Remark>>;
 }
 
 pub trait InsertRemark {
-    fn insert_remark(&self, new_remark: NewRemark) -> impl Future<Output = Result<Uuid>>;
+    fn insert_remark(&self, new_remark: NewRemark)
+    -> impl Future<Output = ApplicationResult<Uuid>>;
 }
 
 pub trait UpdateRemark {
-    fn update_remark(&self, parameters: RemarkUpdates) -> impl Future<Output = Result<()>>;
+    fn update_remark(
+        &self,
+        parameters: RemarkUpdates,
+    ) -> impl Future<Output = ApplicationResult<()>>;
 }
 
 pub trait ListRemarks {
     fn list_remarks(
         &self,
         listing_parameters: RemarksListingParameters,
-    ) -> impl Future<Output = Result<RemarksListing>>;
+    ) -> impl Future<Output = ApplicationResult<RemarksListing>>;
 }
 
-pub async fn create_remark(new_remark: NewRemark, repository: &impl InsertRemark) -> Result<Uuid> {
+#[tracing::instrument(skip_all)]
+pub async fn create_remark(
+    new_remark: NewRemark,
+    repository: &impl InsertRemark,
+) -> ApplicationResult<Uuid> {
     let NewRemark { essence, tags } = new_remark;
 
     let new_remark = NewRemark {
@@ -64,27 +72,31 @@ pub async fn create_remark(new_remark: NewRemark, repository: &impl InsertRemark
     repository.insert_remark(new_remark).await
 }
 
-pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> Result<()> {
+#[tracing::instrument(skip_all)]
+pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> ApplicationResult<()> {
     repository.delete_remark(id).await?;
 
     Ok(())
 }
 
-pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> Result<Remark> {
+#[tracing::instrument(skip_all)]
+pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> ApplicationResult<Remark> {
     repository.get_remark(id).await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_remarks(
     parameters: RemarksListingParameters,
     repository: &impl ListRemarks,
-) -> Result<RemarksListing> {
+) -> ApplicationResult<RemarksListing> {
     repository.list_remarks(parameters).await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_remark(
     parameters: RemarkUpdates,
     repository: &impl UpdateRemark,
-) -> Result<()> {
+) -> ApplicationResult<()> {
     if parameters.is_empty() {
         return Ok(());
     }

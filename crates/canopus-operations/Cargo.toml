@@ -8,9 +8,7 @@ name = "canopus_operations"
 
 [dependencies]
 chrono = { workspace = true }
-csv = { workspace = true }
-eyre = { workspace = true }
-thiserror = { workspace = true }
+tracing = { workspace = true }
 uuid = { workspace = true }
 
 canopus-definitions = { workspace = true }
