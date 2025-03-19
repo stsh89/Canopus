@@ -1,18 +1,42 @@
-mod cli;
 mod display;
-
-pub use cli::*;
 
 use canopus_client::{Client, tags};
 use canopus_definitions::ApplicationResult;
+use clap::{Parser, Subcommand};
 use display::Renderer;
+use uuid::Uuid;
 
-pub struct App {
+#[derive(Debug, Parser)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Commands {
+    ShowTag {
+        id: Uuid,
+    },
+    ListTags {
+        #[arg(short, long)]
+        page_token: Option<String>,
+    },
+}
+
+impl Cli {
+    pub fn new_with_args(args: &[&str]) -> eyre::Result<Self> {
+        let cli = Self::try_parse_from(args)?;
+
+        Ok(cli)
+    }
+}
+
+pub struct CliContext {
     client: Client,
     renderer: Renderer,
 }
 
-impl App {
+impl CliContext {
     pub fn initialize() -> eyre::Result<Self> {
         let client = Client::from_env()?;
         let renderer = Renderer::new();
@@ -22,7 +46,7 @@ impl App {
 
     pub async fn execute(&self, cli: Cli) -> ApplicationResult<()> {
         let Cli { command } = cli;
-        let App { client, renderer } = self;
+        let CliContext { client, renderer } = self;
 
         match command {
             Commands::ShowTag { id } => {
