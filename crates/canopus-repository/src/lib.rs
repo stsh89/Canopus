@@ -22,6 +22,7 @@ use tags::TagRow;
 use uuid::Uuid;
 
 const DEFAULT_PAGE_SIZE: i64 = 3;
+const SUBSYSTEM_NAME: &str = "Repository";
 const URL_SAFE_NO_PAD_ENGINE: GeneralPurpose =
     GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
@@ -57,9 +58,9 @@ impl PaginationToken {
 
 impl DeleteRemark for Repository {
     async fn delete_remark(&self, id: Uuid) -> Result<(), ApplicationError> {
-        delete_remark(self, id).await?;
-
-        Ok(())
+        delete_remark(self, id)
+            .await
+            .map_err(|err| from_eyre("failed to delete remark", err))
     }
 }
 
@@ -67,7 +68,7 @@ impl GetRemark for Repository {
     async fn get_remark(&self, remark_id: Uuid) -> Result<Remark, ApplicationError> {
         let remark = get_remark(self, remark_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::remark_not_found(remark_id),
-            err => eyre::Error::from(err).into(),
+            err => from_eyre("failed to get remark", eyre::Error::from(err)),
         })?;
 
         Ok(remark)
@@ -75,10 +76,11 @@ impl GetRemark for Repository {
 }
 
 impl GetTag for Repository {
+    #[tracing::instrument(skip(self))]
     async fn get_tag(&self, tag_id: Uuid) -> Result<Tag, ApplicationError> {
         let tag = get_tag(self, tag_id).await.map_err(|err| match err {
             sqlx::Error::RowNotFound => ApplicationError::tag_not_found(tag_id),
-            err => eyre::Error::from(err).into(),
+            err => from_eyre("failed to get tag", eyre::Error::from(err)),
         })?;
 
         Ok(tag)
@@ -87,11 +89,9 @@ impl GetTag for Repository {
 
 impl InsertRemark for Repository {
     async fn insert_remark(&self, new_remark: NewRemark) -> Result<Uuid, ApplicationError> {
-        let id = save_remark(self, new_remark)
+        save_remark(self, new_remark)
             .await
-            .map_err(Into::<eyre::Error>::into)?;
-
-        Ok(id)
+            .map_err(|err| from_eyre("failed to insert remark", err))
     }
 }
 
@@ -100,9 +100,9 @@ impl ListRemarks for Repository {
         &self,
         parameters: RemarksListingParameters,
     ) -> Result<RemarksListing, ApplicationError> {
-        let listing = list_remarks(self, parameters).await?;
-
-        Ok(listing)
+        list_remarks(self, parameters)
+            .await
+            .map_err(|err| from_eyre("failed to list remarks", err))
     }
 }
 
@@ -111,9 +111,9 @@ impl ListTags for Repository {
         &self,
         parameters: ListTagsParameters,
     ) -> Result<Page<Tag>, ApplicationError> {
-        let page = list_tags(self, parameters).await?;
-
-        Ok(page)
+        list_tags(self, parameters)
+            .await
+            .map_err(|err| from_eyre("failed to list tags", err))
     }
 }
 
@@ -121,9 +121,7 @@ impl UpdateRemark for Repository {
     async fn update_remark(&self, parameters: RemarkUpdates) -> Result<(), ApplicationError> {
         update_remark(self, parameters)
             .await
-            .map_err(Into::<eyre::Error>::into)?;
-
-        Ok(())
+            .map_err(|err| from_eyre("failed to update remark", err))
     }
 }
 
@@ -141,6 +139,10 @@ async fn assign_tags(
     }
 
     Ok(())
+}
+
+fn from_eyre(description: &str, report: eyre::Error) -> ApplicationError {
+    ApplicationError::from_eyre(SUBSYSTEM_NAME, description, report)
 }
 
 fn build_remarks_pagination_token(rows: &[RemarkRow]) -> Option<PaginationToken> {
@@ -255,7 +257,7 @@ async fn list_tags(
     })
 }
 
-async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> sqlx::Result<()> {
+async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> eyre::Result<()> {
     let RemarkUpdates {
         id,
         essence,
@@ -279,7 +281,7 @@ async fn update_remark(repository: &Repository, parameters: RemarkUpdates) -> sq
     Ok(())
 }
 
-async fn save_remark(repository: &Repository, new_remark: NewRemark) -> sqlx::Result<Uuid> {
+async fn save_remark(repository: &Repository, new_remark: NewRemark) -> eyre::Result<Uuid> {
     let NewRemark { essence, tags } = new_remark;
 
     let mut tx = repository.pool.begin().await?;
