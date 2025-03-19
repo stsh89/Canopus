@@ -1,7 +1,7 @@
 pub mod tags;
 
 use canopus_definitions::{ApplicationError, ApplicationResult};
-use eyre::Context;
+use eyre::WrapErr;
 use reqwest::Url;
 use serde::Deserialize;
 use std::env;

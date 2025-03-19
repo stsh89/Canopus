@@ -1,5 +1,5 @@
 use canopus_cli::{App, Cli};
-use eyre::Context;
+use eyre::WrapErr;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

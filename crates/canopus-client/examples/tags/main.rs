@@ -1,7 +1,7 @@
 use canopus_client::{Client, tags};
 use canopus_definitions::ApplicationResult;
 use clap::{Parser, Subcommand, command};
-use eyre::Context;
+use eyre::WrapErr;
 use uuid::Uuid;
 
 #[tokio::main]
