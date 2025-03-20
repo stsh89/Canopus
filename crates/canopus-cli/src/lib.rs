@@ -1,6 +1,6 @@
 mod display;
 
-use canopus_client::{Client, tags};
+use canopus_client::{Client, remarks, tags};
 use canopus_definitions::ApplicationResult;
 use clap::{Parser, Subcommand};
 use display::Renderer;
@@ -18,6 +18,10 @@ pub enum Commands {
         id: Uuid,
     },
     ListTags {
+        #[arg(short, long)]
+        page_token: Option<String>,
+    },
+    ListRemarks {
         #[arg(short, long)]
         page_token: Option<String>,
     },
@@ -56,6 +60,11 @@ impl CliContext {
             }
             Commands::ListTags { page_token } => {
                 let page = tags::index(client, page_token).await?;
+
+                renderer.render(page);
+            }
+            Commands::ListRemarks { page_token } => {
+                let page = remarks::index(client, page_token).await?;
 
                 renderer.render(page);
             }
