@@ -8,6 +8,8 @@ use canopus_engine::Engine;
 use error::Error;
 use rocket::{Request, serde::json::Json};
 
+type Result<T> = std::result::Result<T, Error>;
+
 #[macro_use]
 extern crate rocket;
 
@@ -20,6 +22,7 @@ async fn main() -> eyre::Result<()> {
         .mount("/tags", routes![tags::index])
         .mount("/tags", routes![tags::show])
         .mount("/remarks", routes![remarks::index])
+        .mount("/remarks", routes![remarks::create])
         .register("/", catchers![not_found])
         .manage(engine)
         .launch()
