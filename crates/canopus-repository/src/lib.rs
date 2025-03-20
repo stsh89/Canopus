@@ -15,9 +15,11 @@ use canopus_operations::{
     tags::{GetTag, ListTags, ListTagsParameters},
 };
 use chrono::{DateTime, Utc};
+use itertools::Itertools;
 use remarks::RemarkRow;
 use serde::{Deserialize, Serialize};
 use sqlx::PgTransaction;
+use std::collections::HashMap;
 use tags::TagRow;
 use uuid::Uuid;
 
@@ -235,9 +237,23 @@ async fn list_remarks(
         .transpose()?
         .map(Into::<PageToken>::into);
 
+    let mut items: Vec<Remark> = rows.into_iter().map(Into::into).collect();
+    let remark_ids: Vec<Uuid> = items.iter().map(|remark| remark.id()).collect();
+    let remarks_tags = remarks::preload_tags(&repository.pool, &remark_ids).await?;
+    let mut grouped_tags: HashMap<Uuid, Vec<Tag>> = remarks_tags
+        .into_iter()
+        .map(|(id, row)| (id, row.into()))
+        .into_group_map();
+
+    for item in items.iter_mut() {
+        if let Some(tags) = grouped_tags.remove(&item.id()) {
+            item.set_tags(tags);
+        }
+    }
+
     Ok(Page {
         next_page_token,
-        items: rows.into_iter().map(Into::into).collect(),
+        items,
     })
 }
 

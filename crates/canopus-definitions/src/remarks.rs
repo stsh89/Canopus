@@ -24,6 +24,14 @@ pub struct RemarkAttributes {
 pub struct RemarkEssence(String);
 
 impl Remark {
+    pub fn add_tag(&mut self, tag: Tag) {
+        self.tags.push(tag);
+    }
+
+    pub fn set_tags(&mut self, tags: Vec<Tag>) {
+        self.tags = tags;
+    }
+
     pub fn created_at(&self) -> DateTime<Utc> {
         self.created_at
     }
@@ -52,10 +60,6 @@ impl Remark {
             created_at,
             updated_at,
         }
-    }
-
-    pub fn set_tags(&mut self, tags: Vec<Tag>) {
-        self.tags = tags;
     }
 
     pub fn tags(&self) -> &[Tag] {

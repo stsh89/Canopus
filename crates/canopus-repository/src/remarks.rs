@@ -77,19 +77,51 @@ pub async fn list_remarks(
 }
 
 pub async fn list_tags(pool: &PgPool, remark_id: Uuid) -> sqlx::Result<Vec<TagRow>> {
-    let rows = sqlx::query_as!(
+    sqlx::query_as!(
         TagRow,
         r#"
-            SELECT tags.* FROM tags
-            JOIN remarks_tags ON remarks_tags.tag_id = tags.id AND remarks_tags.remark_id = $1
-            ORDER BY tags.title DESC
+SELECT tags.* FROM tags
+JOIN remarks_tags ON remarks_tags.tag_id = tags.id AND remarks_tags.remark_id = $1
+ORDER BY tags.title DESC
         "#,
         remark_id
     )
     .fetch_all(pool)
+    .await
+}
+
+pub async fn preload_tags(pool: &PgPool, remark_ids: &[Uuid]) -> sqlx::Result<Vec<(Uuid, TagRow)>> {
+    use sqlx::Row;
+
+    let rows = sqlx::query(
+        r#"
+SELECT remarks_tags.remark_id, tags.*
+FROM tags
+JOIN remarks_tags ON remarks_tags.tag_id = tags.id
+WHERE remarks_tags.remark_id = ANY($1)
+ORDER BY tags.title DESC
+        "#,
+    )
+    .bind(remark_ids)
+    .fetch_all(pool)
     .await?;
 
-    Ok(rows)
+    let tags = rows
+        .into_iter()
+        .map(|row| {
+            (
+                row.get("remark_id"),
+                TagRow {
+                    id: row.get("id"),
+                    title: row.get("title"),
+                    created_at: row.get("created_at"),
+                    updated_at: row.get("updated_at"),
+                },
+            )
+        })
+        .collect();
+
+    Ok(tags)
 }
 
 pub async fn update_remark(
