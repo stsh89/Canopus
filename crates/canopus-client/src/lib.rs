@@ -1,3 +1,4 @@
+pub mod remarks;
 pub mod tags;
 
 use canopus_definitions::{ApplicationError, ApplicationResult};
@@ -43,8 +44,9 @@ struct Resource<'a> {
 }
 
 enum Path {
-    Tags,
+    Remarks,
     Tag(Uuid),
+    Tags,
 }
 
 fn from_eyre(description: &str, report: eyre::Report) -> ApplicationError {
@@ -87,6 +89,7 @@ impl TryFrom<Resource<'_>> for Url {
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Path::Remarks => f.write_str("/remarks"),
             Path::Tags => f.write_str("/tags"),
             Path::Tag(id) => write!(f, "{}/{}", Path::Tags, id),
         }
