@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::{ApplicationError, ApplicationResult};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RemarkEssence(String);

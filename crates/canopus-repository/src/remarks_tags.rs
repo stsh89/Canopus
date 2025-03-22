@@ -1,11 +1,10 @@
+use canopus_definitions::ApplicationResult;
 use sqlx::PgTransaction;
 use uuid::Uuid;
 
-pub async fn create(
-    tx: &mut PgTransaction<'_>,
-    remark_id: Uuid,
-    tag_id: Uuid,
-) -> Result<(), sqlx::Error> {
+use crate::from_sqlx_err;
+
+pub async fn create(tx: &mut PgTransaction<'_>, remark_id: Uuid, tag_id: Uuid) -> sqlx::Result<()> {
     sqlx::query!(
         r#"
 INSERT INTO remarks_tags ( remark_id, tag_id )
@@ -40,40 +39,22 @@ SELECT EXISTS(
     Ok(exists)
 }
 
-pub async fn delete_wasted_remarks_tags(tx: &mut PgTransaction<'_>) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!(
+pub async fn delete_unused_remarks_tags(tx: &mut PgTransaction<'_>) -> ApplicationResult<()> {
+    sqlx::query!(
         r#"
-WITH wasted_remarks_tags AS (
+WITH unused_remarks_tags AS (
     SELECT remark_id
     FROM remarks_tags
     LEFT JOIN remarks ON remarks_tags.remark_id = remarks.id
     WHERE remarks.id IS NULL
 )
 DELETE FROM remarks_tags
-WHERE remarks_tags.remark_id IN (SELECT wasted_remarks_tags.remark_id FROM wasted_remarks_tags)
+WHERE remarks_tags.remark_id IN (SELECT unused_remarks_tags.remark_id FROM unused_remarks_tags)
         "#,
     )
     .execute(&mut **tx)
-    .await?;
+    .await
+    .map_err(from_sqlx_err)?;
 
-    Ok(rec.rows_affected())
-}
-
-pub async fn delete(
-    tx: &mut PgTransaction<'_>,
-    remark_id: Uuid,
-    tag_id: Uuid,
-) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!(
-        r#"
-DELETE FROM remarks_tags
-WHERE remark_id = $1 AND tag_id = $2
-        "#,
-        remark_id,
-        tag_id
-    )
-    .execute(&mut **tx)
-    .await?;
-
-    Ok(rec.rows_affected())
+    Ok(())
 }

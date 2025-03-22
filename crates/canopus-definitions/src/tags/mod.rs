@@ -6,6 +6,8 @@ use uuid::Uuid;
 
 pub use tag_title::TagTitle;
 
+use crate::{ApplicationError, ApplicationResult};
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Tag {
     id: Uuid,
@@ -44,6 +46,22 @@ impl Tag {
             created_at,
             updated_at,
         }
+    }
+
+    pub fn set_title(&mut self, title: TagTitle) {
+        self.title = title;
+    }
+
+    pub fn set_updated_at(&mut self, updated_at: DateTime<Utc>) -> ApplicationResult<()> {
+        if self.updated_at > updated_at {
+            return Err(ApplicationError::invalid_argument(
+                "updated_at must be greater than current updated_at",
+            ));
+        }
+
+        self.updated_at = updated_at;
+
+        Ok(())
     }
 
     pub fn title(&self) -> &TagTitle {

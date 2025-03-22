@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::{ApplicationError, ApplicationResult};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq, PartialOrd, Ord)]
 pub struct TagTitle(String);
 
 impl TagTitle {

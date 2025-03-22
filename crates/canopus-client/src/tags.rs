@@ -1,4 +1,7 @@
-use crate::{Client, Path, Resource, from_eyre, get};
+use crate::{
+    Client, from_eyre,
+    rest::{self, Path, Resource},
+};
 use canopus_definitions::{ApplicationResult, Page, Tag};
 use uuid::Uuid;
 
@@ -9,7 +12,7 @@ pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationRe
         .as_deref()
         .map(|token| vec![("page_token", token)]);
 
-    get(
+    rest::get(
         inner,
         Resource {
             base_url,
@@ -25,7 +28,7 @@ pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationRe
 pub async fn show(client: &Client, id: Uuid) -> ApplicationResult<Tag> {
     let Client { base_url, inner } = client;
 
-    get(
+    rest::get(
         inner,
         Resource {
             base_url,

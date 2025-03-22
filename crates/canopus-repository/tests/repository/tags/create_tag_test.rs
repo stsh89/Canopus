@@ -7,7 +7,7 @@ async fn it_creates_tag(pool: PgPool) -> sqlx::Result<()> {
     let count_was = support::count_tags(&pool).await?;
 
     let mut tx = pool.begin().await?;
-    tags::create_tag(&mut tx, "Philosophy").await?;
+    tags::insert_tag(&mut tx, "Philosophy").await?;
     tx.commit().await?;
 
     let count = support::count_tags(&pool).await?;

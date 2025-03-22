@@ -1,9 +1,14 @@
-use canopus_definitions::{Tag, TagAttributes};
+use crate::{
+    DEFAULT_PAGE_SIZE, Repository, URL_SAFE_NO_PAD_ENGINE, commit_transaction, from_sqlx_err,
+};
+use canopus_definitions::{
+    ApplicationError, ApplicationResult, Page, Tag, TagAttributes, TagTitle,
+};
+use canopus_operations::tags::{GetTag, ListTags, TagsPageParameters, UpdateTag};
 use chrono::{DateTime, Utc};
-use sqlx::{PgPool, PgTransaction};
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
-
-use crate::{DEFAULT_PAGE_SIZE, PaginationToken};
 
 pub struct TagRow {
     pub id: Uuid,
@@ -12,117 +17,157 @@ pub struct TagRow {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn create_tag(tx: &mut PgTransaction<'_>, title: &str) -> Result<Uuid, sqlx::Error> {
-    let rec = sqlx::query!(
-        r#"
-INSERT INTO tags ( title )
-VALUES ( lower($1) )
-RETURNING id
-        "#,
-        title
-    )
-    .fetch_one(&mut **tx)
-    .await?;
-
-    Ok(rec.id)
+pub struct TagTitleRow {
+    pub title: String,
 }
 
-pub async fn delete_tag(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!("DELETE FROM tags WHERE id = $1", id)
-        .execute(pool)
-        .await?;
-
-    Ok(rec.rows_affected())
+impl GetTag for Repository {
+    #[tracing::instrument(skip_all)]
+    async fn get_tag(&self, id: Uuid) -> ApplicationResult<Tag> {
+        sqlx::query_as!(TagRow, "SELECT * FROM tags WHERE id = $1", id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(from_sqlx_err)?
+            .try_into()
+    }
 }
 
-pub async fn delete_wasted_tags(tx: &mut PgTransaction<'_>) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!(
-        r#"
-WITH wasted_tags AS (
-    SELECT id
-    FROM tags
-    LEFT JOIN remarks_tags ON remarks_tags.tag_id = tags.id
-    WHERE remarks_tags.tag_id IS NULL
-)
-DELETE FROM tags
-WHERE tags.id IN (SELECT wasted_tags.id FROM wasted_tags)
-        "#
-    )
-    .execute(&mut **tx)
-    .await?;
+impl ListTags for Repository {
+    #[tracing::instrument(skip_all)]
+    async fn list_tags(&self, parameters: TagsPageParameters) -> ApplicationResult<Page<Tag>> {
+        let TagsPageParameters { page_token } = parameters;
 
-    Ok(rec.rows_affected())
+        let page_token = page_token.map(TryInto::<PageToken>::try_into).transpose()?;
+
+        let last_id = page_token
+            .as_ref()
+            .map(|token| token.id)
+            .unwrap_or(Uuid::nil());
+
+        let last_created_at = page_token
+            .map(|token| token.created_at)
+            .unwrap_or(Utc::now());
+
+        let rows = sqlx::query_as!(
+            TagRow,
+            r#"
+SELECT * FROM tags
+WHERE created_at < $1 OR (created_at = $1 AND id > $2)
+ORDER BY created_at DESC, id ASC
+LIMIT $3
+            "#,
+            last_created_at,
+            last_id,
+            DEFAULT_PAGE_SIZE,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(from_sqlx_err)?;
+
+        let next_page_token = PageToken::from_rows(&rows).map(Into::into);
+        let items = rows
+            .into_iter()
+            .map(TryInto::<Tag>::try_into)
+            .collect::<ApplicationResult<Vec<Tag>>>()?;
+
+        Ok(Page {
+            next_page_token,
+            items,
+        })
+    }
 }
 
-pub async fn get_tag(pool: &PgPool, id: Uuid) -> Result<TagRow, sqlx::Error> {
-    let row = sqlx::query_as!(TagRow, "SELECT * FROM tags WHERE id = $1", id)
-        .fetch_one(pool)
-        .await?;
+impl UpdateTag for Repository {
+    #[tracing::instrument(skip_all)]
+    async fn update_tag(&self, tag: &mut Tag) -> Result<(), ApplicationError> {
+        let mut tx = self.begin_transaction().await?;
 
-    Ok(row)
-}
-
-pub async fn find(tx: &mut PgTransaction<'_>, title: &str) -> Result<Option<Uuid>, sqlx::Error> {
-    let rec = sqlx::query_scalar!(r#"SELECT id FROM tags WHERE title = lower($1)"#, title)
-        .fetch_optional(&mut **tx)
-        .await?;
-
-    Ok(rec)
-}
-
-pub async fn list_tags(
-    pool: &PgPool,
-    pagination_token: Option<PaginationToken>,
-) -> sqlx::Result<Vec<TagRow>> {
-    let pagination_id = pagination_token
-        .as_ref()
-        .map(|token| token.id)
-        .unwrap_or(Uuid::nil());
-
-    let pagination_created_at = pagination_token
-        .map(|token| token.created_at)
-        .unwrap_or(Utc::now());
-
-    let rows = sqlx::query_as!(
-        TagRow,
-        r#"
-            SELECT * FROM tags
-            WHERE
-                created_at < $1 OR (created_at = $1 AND id > $2)
-            ORDER BY created_at DESC, id ASC
-            LIMIT $3
-        "#,
-        pagination_created_at,
-        pagination_id,
-        DEFAULT_PAGE_SIZE,
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(rows)
-}
-
-pub async fn update(pool: &PgPool, id: Uuid, title: &str) -> Result<u64, sqlx::Error> {
-    let rec = sqlx::query!(
-        r#"
+        let rec = sqlx::query!(
+            r#"
 UPDATE tags
-SET
-    title = lower($2),
-    updated_at = DEFAULT
-WHERE
-    id = $1
-        "#,
-        id,
-        title
-    )
-    .execute(pool)
-    .await?;
+SET title = $2, updated_at = DEFAULT
+WHERE id = $1
+RETURNING updated_at
+            "#,
+            tag.id(),
+            tag.title().as_str()
+        )
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(from_sqlx_err)?;
 
-    Ok(rec.rows_affected())
+        tag.set_updated_at(rec.updated_at)?;
+
+        commit_transaction(tx).await?;
+
+        Ok(())
+    }
 }
 
-impl From<TagRow> for Tag {
-    fn from(value: TagRow) -> Self {
+#[derive(Serialize, Deserialize)]
+struct PageToken {
+    id: Uuid,
+    created_at: DateTime<Utc>,
+}
+
+impl PageToken {
+    fn from_rows(rows: &[TagRow]) -> Option<Self> {
+        if rows.len() < DEFAULT_PAGE_SIZE as usize {
+            return None;
+        }
+
+        rows.last().map(|row| PageToken {
+            id: row.id,
+            created_at: row.created_at,
+        })
+    }
+}
+
+impl FromStr for PageToken {
+    type Err = eyre::Error;
+
+    fn from_str(s: &str) -> eyre::Result<Self> {
+        use base64::Engine;
+
+        let json = URL_SAFE_NO_PAD_ENGINE.decode(s)?;
+        let token = serde_json::from_slice(&json)?;
+
+        Ok(token)
+    }
+}
+
+impl TryFrom<canopus_definitions::PageToken> for PageToken {
+    type Error = ApplicationError;
+
+    fn try_from(value: canopus_definitions::PageToken) -> ApplicationResult<Self> {
+        value
+            .parse()
+            .map_err(|_err| ApplicationError::invalid_argument("malformed tags page token"))
+    }
+}
+
+impl std::fmt::Display for PageToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use base64::Engine;
+
+        let json = serde_json::to_string(&self).map_err(|_err| std::fmt::Error)?;
+
+        let encoded_json = URL_SAFE_NO_PAD_ENGINE.encode(json);
+
+        f.write_str(&encoded_json)
+    }
+}
+
+impl From<PageToken> for canopus_definitions::PageToken {
+    fn from(value: PageToken) -> Self {
+        value.to_string().into()
+    }
+}
+
+impl TryFrom<TagRow> for Tag {
+    type Error = ApplicationError;
+
+    fn try_from(value: TagRow) -> ApplicationResult<Self> {
         let TagRow {
             id,
             title,
@@ -130,11 +175,23 @@ impl From<TagRow> for Tag {
             updated_at,
         } = value;
 
-        Self::new(TagAttributes {
+        let tag = Self::new(TagAttributes {
             id,
-            title,
+            title: TagTitle::new(title)?,
             created_at,
             updated_at,
-        })
+        });
+
+        Ok(tag)
+    }
+}
+
+impl TryFrom<TagTitleRow> for TagTitle {
+    type Error = ApplicationError;
+
+    fn try_from(value: TagTitleRow) -> ApplicationResult<Self> {
+        let TagTitleRow { title } = value;
+
+        TagTitle::new(title)
     }
 }

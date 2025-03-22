@@ -2,7 +2,7 @@ mod remark_essence;
 
 pub use remark_essence::RemarkEssence;
 
-use crate::TagTitle;
+use crate::{ApplicationError, ApplicationResult, TagTitle};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -63,6 +63,18 @@ impl Remark {
         tags.sort();
 
         self.tags = tags;
+    }
+
+    pub fn set_updated_at(&mut self, updated_at: DateTime<Utc>) -> ApplicationResult<()> {
+        if self.updated_at > updated_at {
+            return Err(ApplicationError::invalid_argument(
+                "updated_at must be greater than current updated_at",
+            ));
+        }
+
+        self.updated_at = updated_at;
+
+        Ok(())
     }
 
     pub fn tags(&self) -> &[TagTitle] {

@@ -21,10 +21,6 @@ impl Error {
         Self::InvalidArgument(Json(err))
     }
 
-    fn not_found(err: ApplicationError) -> Self {
-        Self::NotFound(Json(err))
-    }
-
     pub fn invalid_id() -> Self {
         Self::InvalidArgument(Json(ApplicationError::invalid_argument(
             "ID is not a valid UUID",
@@ -40,9 +36,10 @@ impl From<ApplicationError> for Error {
     fn from(value: ApplicationError) -> Self {
         match value {
             ApplicationError::InvalidArgument { .. } => Error::bad_request(value),
-            ApplicationError::NotFound { .. } => Error::not_found(value),
+            ApplicationError::NotFound => Error::NotFound(Json(value)),
             ApplicationError::Internal { .. } => Error::internal(value),
             ApplicationError::Unimplemented => Error::Unimplemented(Json(value)),
+            ApplicationError::Repository(_) => Error::internal(value),
         }
     }
 }

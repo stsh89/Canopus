@@ -1,4 +1,6 @@
-use canopus_definitions::{ApplicationError, ApplicationResult, Page, PageToken, Remark, RemarkEssence, TagTitle};
+use canopus_definitions::{
+    ApplicationError, ApplicationResult, Page, PageToken, Remark, RemarkEssence, TagTitle,
+};
 use std::future::Future;
 use uuid::Uuid;
 
@@ -23,7 +25,7 @@ pub struct RemarksPageParameters {
 }
 
 pub trait DeleteRemark {
-    fn delete_remark(&self, id: Uuid) -> impl Future<Output = ApplicationResult<()>>;
+    fn delete_remark(&self, remark: &Remark) -> impl Future<Output = ApplicationResult<()>>;
 }
 
 pub trait GetRemark {
@@ -31,15 +33,11 @@ pub trait GetRemark {
 }
 
 pub trait InsertRemark {
-    fn insert_remark(&self, remark: NewRemark)
-    -> impl Future<Output = ApplicationResult<Remark>>;
+    fn insert_remark(&self, remark: NewRemark) -> impl Future<Output = ApplicationResult<Remark>>;
 }
 
 pub trait UpdateRemark {
-    fn update_remark(
-        &self,
-        remark: &Remark,
-    ) -> impl Future<Output = ApplicationResult<()>>;
+    fn update_remark(&self, remark: &mut Remark) -> impl Future<Output = ApplicationResult<()>>;
 }
 
 pub trait ListRemarks {
@@ -60,10 +58,13 @@ pub async fn create_remark(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn delete_remark(id: Uuid, repository: &(impl DeleteRemark + GetRemark)) -> ApplicationResult<Remark> {
+pub async fn delete_remark(
+    id: Uuid,
+    repository: &(impl DeleteRemark + GetRemark),
+) -> ApplicationResult<Remark> {
     let remark = repository.get_remark(id).await?;
 
-    repository.delete_remark(id).await?;
+    repository.delete_remark(&remark).await?;
 
     Ok(remark)
 }
@@ -88,7 +89,9 @@ pub async fn update_remark(
     repository: &(impl UpdateRemark + GetRemark),
 ) -> ApplicationResult<Remark> {
     if changes.is_empty() {
-        return Err(ApplicationError::invalid_argument("no remark changes provided"));
+        return Err(ApplicationError::invalid_argument(
+            "no remark changes provided",
+        ));
     }
 
     let mut remark = repository.get_remark(id).await?;
@@ -100,11 +103,14 @@ pub async fn update_remark(
     }
 
     if let Some(tags) = tags {
-        let tags = tags.into_iter().map(TagTitle::new).collect::<ApplicationResult<Vec<TagTitle>>>()?;
+        let tags = tags
+            .into_iter()
+            .map(TagTitle::new)
+            .collect::<ApplicationResult<Vec<TagTitle>>>()?;
         remark.set_tags(tags);
     }
 
-    repository.update_remark(&remark).await?;
+    repository.update_remark(&mut remark).await?;
 
     Ok(remark)
 }
@@ -115,12 +121,31 @@ impl NewRemark {
 
         Ok(NewRemark {
             essence: RemarkEssence::new(essence)?,
-            tags: tags.into_iter().map(|tag| TagTitle::new(tag)).collect::<ApplicationResult<Vec<TagTitle>>>()?,
+            tags: tags
+                .into_iter()
+                .map(TagTitle::new)
+                .collect::<ApplicationResult<Vec<TagTitle>>>()?,
         })
     }
 }
 
+impl NewRemarkAttributes {
+    pub fn empty() -> Self {
+        NewRemarkAttributes {
+            essence: String::new(),
+            tags: Vec::new(),
+        }
+    }
+}
+
 impl RemarkChanges {
+    pub fn empty() -> Self {
+        RemarkChanges {
+            essence: None,
+            tags: None,
+        }
+    }
+
     fn is_empty(&self) -> bool {
         self.essence.is_none() && self.tags.is_none()
     }

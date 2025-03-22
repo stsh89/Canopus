@@ -1,4 +1,5 @@
 mod error;
+mod helpers;
 mod remarks;
 mod tags;
 mod tracing;
@@ -21,9 +22,12 @@ async fn main() -> eyre::Result<()> {
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
         .mount("/tags", routes![tags::show])
-        .mount("/remarks", routes![remarks::index])
         .mount("/remarks", routes![remarks::create])
-        .register("/", catchers![not_found])
+        .mount("/remarks", routes![remarks::delete])
+        .mount("/remarks", routes![remarks::index])
+        .mount("/remarks", routes![remarks::show])
+        .mount("/remarks", routes![remarks::update])
+        .register("/", catchers![not_found, internal_error])
         .manage(engine)
         .launch()
         .await?;
@@ -34,4 +38,13 @@ async fn main() -> eyre::Result<()> {
 #[catch(404)]
 fn not_found(_req: &Request) -> Error {
     Error::Unimplemented(Json(ApplicationError::Unimplemented))
+}
+
+#[catch(500)]
+fn internal_error(req: &Request) -> Error {
+    Error::Unimplemented(Json(ApplicationError::from_eyre(
+        "API",
+        "faced unexpected error",
+        eyre::Report::msg(req.to_string()),
+    )))
 }
