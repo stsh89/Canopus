@@ -1,3 +1,7 @@
+mod page_token;
+
+pub use page_token::PageToken;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -11,23 +15,6 @@ where
     pub next_page_token: Option<PageToken>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct PageToken(String);
-
-impl std::ops::Deref for PageToken {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::fmt::Display for PageToken {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PageToken {{ {} }}", self.0)
-    }
-}
-
 impl<T> std::fmt::Display for Page<T>
 where
     T: Serialize,
@@ -36,11 +23,5 @@ where
         let json = serde_json::to_string_pretty(self).map_err(|_| std::fmt::Error)?;
 
         f.write_str(&json)
-    }
-}
-
-impl From<String> for PageToken {
-    fn from(value: String) -> Self {
-        Self(value)
     }
 }

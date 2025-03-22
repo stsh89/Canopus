@@ -1,6 +1,10 @@
+mod tag_title;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+pub use tag_title::TagTitle;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Tag {
@@ -12,13 +16,10 @@ pub struct Tag {
 
 pub struct TagAttributes {
     pub id: Uuid,
-    pub title: String,
+    pub title: TagTitle,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct TagTitle(String);
 
 impl Tag {
     pub fn created_at(&self) -> DateTime<Utc> {
@@ -39,7 +40,7 @@ impl Tag {
 
         Self {
             id,
-            title: TagTitle(title),
+            title,
             created_at,
             updated_at,
         }
@@ -54,17 +55,9 @@ impl Tag {
     }
 }
 
-impl std::ops::Deref for TagTitle {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 impl std::fmt::Display for Tag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let json = serde_json::to_string_pretty(&self).map_err(|_| std::fmt::Error)?;
+        let json = serde_json::to_string_pretty(&self).map_err(|_err| std::fmt::Error)?;
 
         f.write_str(&json)
     }

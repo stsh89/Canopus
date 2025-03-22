@@ -1,4 +1,8 @@
-use crate::Tag;
+mod remark_essence;
+
+pub use remark_essence::RemarkEssence;
+
+use crate::TagTitle;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -7,31 +11,20 @@ use uuid::Uuid;
 pub struct Remark {
     id: Uuid,
     essence: RemarkEssence,
-    tags: Vec<Tag>,
+    tags: Vec<TagTitle>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
 
 pub struct RemarkAttributes {
     pub id: Uuid,
-    pub essence: String,
-    pub tags: Vec<Tag>,
+    pub essence: RemarkEssence,
+    pub tags: Vec<TagTitle>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct RemarkEssence(String);
-
 impl Remark {
-    pub fn add_tag(&mut self, tag: Tag) {
-        self.tags.push(tag);
-    }
-
-    pub fn set_tags(&mut self, tags: Vec<Tag>) {
-        self.tags = tags;
-    }
-
     pub fn created_at(&self) -> DateTime<Utc> {
         self.created_at
     }
@@ -55,14 +48,24 @@ impl Remark {
 
         Remark {
             id,
-            essence: RemarkEssence(essence),
+            essence,
             tags,
             created_at,
             updated_at,
         }
     }
 
-    pub fn tags(&self) -> &[Tag] {
+    pub fn set_essence(&mut self, essence: RemarkEssence) {
+        self.essence = essence;
+    }
+
+    pub fn set_tags(&mut self, mut tags: Vec<TagTitle>) {
+        tags.sort();
+
+        self.tags = tags;
+    }
+
+    pub fn tags(&self) -> &[TagTitle] {
         &self.tags
     }
 
@@ -71,10 +74,10 @@ impl Remark {
     }
 }
 
-impl std::ops::Deref for RemarkEssence {
-    type Target = String;
+impl std::fmt::Display for Remark {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let json = serde_json::to_string_pretty(&self).map_err(|_| std::fmt::Error)?;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        f.write_str(&json)
     }
 }
