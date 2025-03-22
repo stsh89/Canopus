@@ -1,4 +1,4 @@
-use canopus_definitions::{ApplicationResult, Page, Tag};
+use canopus_definitions::{ApplicationResult, Page, PageToken, Tag};
 use std::future::Future;
 use uuid::Uuid;
 
@@ -9,13 +9,13 @@ pub trait GetTag {
 pub trait ListTags {
     fn list_tags(
         &self,
-        parameters: ListTagsParameters,
+        parameters: TagsPageParameters,
     ) -> impl Future<Output = ApplicationResult<Page<Tag>>>;
 }
 
 #[derive(Default)]
-pub struct ListTagsParameters {
-    pub page_token: Option<String>,
+pub struct TagsPageParameters {
+    pub page_token: Option<PageToken>,
 }
 
 #[tracing::instrument(skip_all)]
@@ -24,7 +24,7 @@ pub async fn get_tag(id: Uuid, repository: &impl GetTag) -> ApplicationResult<Ta
 }
 #[tracing::instrument(skip_all)]
 pub async fn list_tags(
-    parameters: ListTagsParameters,
+    parameters: TagsPageParameters,
     repository: &impl ListTags,
 ) -> ApplicationResult<Page<Tag>> {
     repository.list_tags(parameters).await

@@ -1,28 +1,25 @@
-use canopus_definitions::{ApplicationResult, Page, Remark};
+use canopus_definitions::{ApplicationError, ApplicationResult, Page, PageToken, Remark, RemarkEssence, TagTitle};
 use std::future::Future;
 use uuid::Uuid;
 
-pub struct RemarkUpdates {
-    pub id: Uuid,
-    pub essence: Option<String>,
-    pub add_tags: Vec<String>,
-    pub remove_tags: Vec<String>,
+pub struct NewRemark {
+    pub essence: RemarkEssence,
+    pub tags: Vec<TagTitle>,
 }
 
-pub struct NewRemark {
+pub struct NewRemarkAttributes {
     pub essence: String,
     pub tags: Vec<String>,
 }
 
-impl RemarkUpdates {
-    fn is_empty(&self) -> bool {
-        self.add_tags.is_empty() && self.remove_tags.is_empty() && self.essence.is_none()
-    }
+pub struct RemarkChanges {
+    pub essence: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Default)]
-pub struct RemarksListingParameters {
-    pub page_token: Option<String>,
+pub struct RemarksPageParameters {
+    pub page_token: Option<PageToken>,
 }
 
 pub trait DeleteRemark {
@@ -34,44 +31,41 @@ pub trait GetRemark {
 }
 
 pub trait InsertRemark {
-    fn insert_remark(&self, new_remark: NewRemark)
-    -> impl Future<Output = ApplicationResult<Uuid>>;
+    fn insert_remark(&self, remark: NewRemark)
+    -> impl Future<Output = ApplicationResult<Remark>>;
 }
 
 pub trait UpdateRemark {
     fn update_remark(
         &self,
-        parameters: RemarkUpdates,
+        remark: &Remark,
     ) -> impl Future<Output = ApplicationResult<()>>;
 }
 
 pub trait ListRemarks {
     fn list_remarks(
         &self,
-        parameters: RemarksListingParameters,
+        parameters: RemarksPageParameters,
     ) -> impl Future<Output = ApplicationResult<Page<Remark>>>;
 }
 
 #[tracing::instrument(skip_all)]
 pub async fn create_remark(
-    new_remark: NewRemark,
+    attributes: NewRemarkAttributes,
     repository: &impl InsertRemark,
-) -> ApplicationResult<Uuid> {
-    let NewRemark { essence, tags } = new_remark;
-
-    let new_remark = NewRemark {
-        essence: sanitize_essence(essence),
-        tags: tags.into_iter().map(sanitize_tag).collect(),
-    };
+) -> ApplicationResult<Remark> {
+    let new_remark = NewRemark::new(attributes)?;
 
     repository.insert_remark(new_remark).await
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn delete_remark(id: Uuid, repository: &impl DeleteRemark) -> ApplicationResult<()> {
+pub async fn delete_remark(id: Uuid, repository: &(impl DeleteRemark + GetRemark)) -> ApplicationResult<Remark> {
+    let remark = repository.get_remark(id).await?;
+
     repository.delete_remark(id).await?;
 
-    Ok(())
+    Ok(remark)
 }
 
 #[tracing::instrument(skip_all)]
@@ -81,7 +75,7 @@ pub async fn get_remark(id: Uuid, repository: &impl GetRemark) -> ApplicationRes
 
 #[tracing::instrument(skip_all)]
 pub async fn list_remarks(
-    parameters: RemarksListingParameters,
+    parameters: RemarksPageParameters,
     repository: &impl ListRemarks,
 ) -> ApplicationResult<Page<Remark>> {
     repository.list_remarks(parameters).await
@@ -89,20 +83,45 @@ pub async fn list_remarks(
 
 #[tracing::instrument(skip_all)]
 pub async fn update_remark(
-    parameters: RemarkUpdates,
-    repository: &impl UpdateRemark,
-) -> ApplicationResult<()> {
-    if parameters.is_empty() {
-        return Ok(());
+    id: Uuid,
+    changes: RemarkChanges,
+    repository: &(impl UpdateRemark + GetRemark),
+) -> ApplicationResult<Remark> {
+    if changes.is_empty() {
+        return Err(ApplicationError::invalid_argument("no remark changes provided"));
     }
 
-    repository.update_remark(parameters).await
+    let mut remark = repository.get_remark(id).await?;
+
+    let RemarkChanges { essence, tags } = changes;
+
+    if let Some(essence) = essence {
+        remark.set_essence(RemarkEssence::new(essence)?);
+    }
+
+    if let Some(tags) = tags {
+        let tags = tags.into_iter().map(TagTitle::new).collect::<ApplicationResult<Vec<TagTitle>>>()?;
+        remark.set_tags(tags);
+    }
+
+    repository.update_remark(&remark).await?;
+
+    Ok(remark)
 }
 
-fn sanitize_essence(essence: String) -> String {
-    essence.trim().to_string()
+impl NewRemark {
+    fn new(attributes: NewRemarkAttributes) -> ApplicationResult<Self> {
+        let NewRemarkAttributes { essence, tags } = attributes;
+
+        Ok(NewRemark {
+            essence: RemarkEssence::new(essence)?,
+            tags: tags.into_iter().map(|tag| TagTitle::new(tag)).collect::<ApplicationResult<Vec<TagTitle>>>()?,
+        })
+    }
 }
 
-fn sanitize_tag(tag: String) -> String {
-    tag.trim().to_string()
+impl RemarkChanges {
+    fn is_empty(&self) -> bool {
+        self.essence.is_none() && self.tags.is_none()
+    }
 }
