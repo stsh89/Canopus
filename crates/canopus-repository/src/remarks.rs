@@ -107,7 +107,7 @@ RETURNING id, created_at, updated_at
         .await
         .map_err(from_sqlx_err)?;
 
-        link_tags(&mut tx, rec.id, tags.as_slice()).await?;
+        link_tags(&mut tx, rec.id, tags.iter().collect()).await?;
 
         commit_transaction(tx).await?;
 
@@ -301,7 +301,7 @@ RETURNING id, created_at, updated_at
 async fn link_tags(
     tx: &mut PgTransaction<'_>,
     remark_id: Uuid,
-    tags: &[TagTitle],
+    tags: Vec<&TagTitle>,
 ) -> ApplicationResult<()> {
     for title in tags {
         let tag = find_or_create_tag(tx, title.clone()).await?;

@@ -5,13 +5,14 @@ pub use remark_essence::RemarkEssence;
 use crate::{ApplicationError, ApplicationResult, TagTitle};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Remark {
     id: Uuid,
     essence: RemarkEssence,
-    tags: Vec<TagTitle>,
+    tags: BTreeSet<TagTitle>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -49,7 +50,7 @@ impl Remark {
         Remark {
             id,
             essence,
-            tags,
+            tags: BTreeSet::from_iter(tags),
             created_at,
             updated_at,
         }
@@ -59,10 +60,8 @@ impl Remark {
         self.essence = essence;
     }
 
-    pub fn set_tags(&mut self, mut tags: Vec<TagTitle>) {
-        tags.sort();
-
-        self.tags = tags;
+    pub fn set_tags(&mut self, tags: Vec<TagTitle>) {
+        self.tags = BTreeSet::from_iter(tags);
     }
 
     pub fn set_updated_at(&mut self, updated_at: DateTime<Utc>) -> ApplicationResult<()> {
@@ -77,8 +76,8 @@ impl Remark {
         Ok(())
     }
 
-    pub fn tags(&self) -> &[TagTitle] {
-        &self.tags
+    pub fn tags(&self) -> Vec<&TagTitle> {
+        self.tags.iter().collect()
     }
 
     pub fn updated_at(&self) -> DateTime<Utc> {

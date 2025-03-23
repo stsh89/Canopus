@@ -107,6 +107,7 @@ pub async fn update_remark(
             .into_iter()
             .map(TagTitle::new)
             .collect::<ApplicationResult<Vec<TagTitle>>>()?;
+
         remark.set_tags(tags);
     }
 
