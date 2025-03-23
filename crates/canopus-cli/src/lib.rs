@@ -23,6 +23,9 @@ pub struct Cli {
 pub enum Commands {
     CreateRemark {
         #[arg(short, long)]
+        essence: String,
+
+        #[arg(short, long)]
         tags: Vec<String>,
     },
     DeleteRemark {
@@ -31,6 +34,7 @@ pub enum Commands {
     EditRemark {
         id: Uuid,
     },
+    NewRemark,
     ShowRemark {
         id: Uuid,
     },
@@ -45,12 +49,17 @@ pub enum Commands {
         #[arg(short, long)]
         page_token: Option<String>,
     },
+    ClearRemarkTags {
+        id: Uuid,
+    },
     UpdateRemark {
         id: Uuid,
-        #[arg(short, long, value_delimiter = ',', num_args = 1..)]
-        tags: Option<Vec<String>>,
+
         #[arg(short, long)]
         essence: Option<String>,
+
+        #[arg(short, long)]
+        tags: Option<Vec<String>>,
     },
 }
 
@@ -80,9 +89,7 @@ impl CliContext {
         let CliContext { client, renderer } = self;
 
         match command {
-            Commands::CreateRemark { tags } => {
-                let essence = editor::open()?;
-
+            Commands::CreateRemark { essence, tags } => {
                 let remark = remarks::create(client, NewRemark { essence, tags }).await?;
 
                 renderer.render(remark);
@@ -102,6 +109,20 @@ impl CliContext {
                     RemarkUpdates {
                         essence: Some(essence),
                         ..Default::default()
+                    },
+                )
+                .await?;
+
+                renderer.render(remark);
+            }
+            Commands::NewRemark => {
+                let essence = editor::open()?;
+
+                let remark = remarks::create(
+                    client,
+                    NewRemark {
+                        essence,
+                        tags: vec![],
                     },
                 )
                 .await?;
@@ -130,6 +151,19 @@ impl CliContext {
             }
             Commands::UpdateRemark { id, essence, tags } => {
                 let remark = remarks::update(client, id, RemarkUpdates { essence, tags }).await?;
+
+                renderer.render(remark);
+            }
+            Commands::ClearRemarkTags { id } => {
+                let remark = remarks::update(
+                    client,
+                    id,
+                    RemarkUpdates {
+                        essence: None,
+                        tags: Some(vec![]),
+                    },
+                )
+                .await?;
 
                 renderer.render(remark);
             }
