@@ -22,6 +22,7 @@ async fn main() -> eyre::Result<()> {
     let _rocket = rocket::build()
         .mount("/tags", routes![tags::index])
         .mount("/tags", routes![tags::show])
+        .mount("/tags", routes![tags::update])
         .mount("/remarks", routes![remarks::create])
         .mount("/remarks", routes![remarks::delete])
         .mount("/remarks", routes![remarks::index])

@@ -1,5 +1,5 @@
 use crate::Engine;
-use canopus_definitions::{ApplicationResult, Page, Tag, TagTitle};
+use canopus_definitions::{ApplicationResult, Page, Tag};
 use canopus_operations::tags::{self, TagsPageParameters};
 use uuid::Uuid;
 
@@ -18,8 +18,8 @@ pub async fn list_tags(
     tags::list_tags(parameters, repository).await
 }
 
-pub async fn update_tag(engine: &Engine, id: Uuid, tag_title: TagTitle) -> ApplicationResult<Tag> {
+pub async fn update_tag(engine: &Engine, id: Uuid, title: String) -> ApplicationResult<Tag> {
     let Engine { repository } = engine;
 
-    tags::update_tag(id, tag_title, repository).await
+    tags::update_tag(id, title, repository).await
 }

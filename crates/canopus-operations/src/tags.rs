@@ -38,9 +38,11 @@ pub async fn list_tags(
 #[tracing::instrument(skip_all)]
 pub async fn update_tag(
     id: Uuid,
-    title: TagTitle,
+    title: String,
     repository: &(impl UpdateTag + GetTag),
 ) -> ApplicationResult<Tag> {
+    let title = TagTitle::new(title)?;
+
     let mut tag = repository.get_tag(id).await?;
 
     tag.set_title(title);

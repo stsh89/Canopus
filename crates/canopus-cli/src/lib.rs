@@ -61,6 +61,12 @@ pub enum Commands {
         #[arg(short, long)]
         tags: Option<Vec<String>>,
     },
+    UpdateTag {
+        id: Uuid,
+
+        #[arg(short, long)]
+        title: String,
+    },
 }
 
 impl Cli {
@@ -166,6 +172,11 @@ impl CliContext {
                 .await?;
 
                 renderer.render(remark);
+            }
+            Commands::UpdateTag { id, title } => {
+                let tag = tags::update(client, id, title).await?;
+
+                renderer.render(tag);
             }
         }
 
