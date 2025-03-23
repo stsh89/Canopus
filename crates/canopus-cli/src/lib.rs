@@ -64,7 +64,7 @@ pub enum Commands {
 }
 
 impl Cli {
-    pub fn new_with_args(args: &[&str]) -> eyre::Result<Self> {
+    pub fn new_with_args(args: &[String]) -> eyre::Result<Self> {
         let cli = Self::try_parse_from(args)?;
 
         Ok(cli)

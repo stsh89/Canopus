@@ -402,6 +402,7 @@ dependencies = [
  "canopus-definitions",
  "dotenvy",
  "eyre",
+ "shlex",
  "tokio",
 ]
 

@@ -1,4 +1,5 @@
 use canopus_cli::{Cli, CliContext};
+use canopus_definitions::ApplicationError;
 use eyre::WrapErr;
 
 const BASE_URL: &str = "canopus://127.0.0.1";
@@ -21,8 +22,17 @@ async fn main() -> eyre::Result<()> {
             return Ok(());
         }
 
-        let mut args: Vec<&str> = input.split_whitespace().collect();
-        args.insert(0, "");
+        let mut args = match shlex::split(input)
+            .ok_or_else(|| ApplicationError::invalid_argument("malformed command input"))
+        {
+            Ok(args) => args,
+            Err(err) => {
+                eprintln!("{}", err);
+                continue;
+            }
+        };
+
+        args.insert(0, "".to_string());
 
         let cli = match Cli::new_with_args(&args) {
             Ok(cli) => cli,
