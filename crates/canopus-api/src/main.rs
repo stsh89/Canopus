@@ -2,7 +2,7 @@ mod error;
 mod helpers;
 mod remarks;
 mod tags;
-mod tracing;
+mod tracer;
 
 use canopus_definitions::ApplicationError;
 use canopus_engine::Engine;
@@ -16,7 +16,7 @@ extern crate rocket;
 
 #[rocket::main]
 async fn main() -> eyre::Result<()> {
-    let _guard = tracing::init_subscriber();
+    let _guard = tracer::init_subscriber();
     let engine = Engine::start().await?;
 
     let _rocket = rocket::build()
@@ -36,12 +36,18 @@ async fn main() -> eyre::Result<()> {
 }
 
 #[catch(404)]
-fn not_found(_req: &Request) -> Error {
+#[tracing::instrument(name = "Not found error catcher")]
+fn not_found(req: &Request) -> Error {
+    tracing::error!("Catch not found API error");
+
     Error::Unimplemented(Json(ApplicationError::Unimplemented))
 }
 
 #[catch(500)]
+#[tracing::instrument(name = "Internal error catcher")]
 fn internal_error(req: &Request) -> Error {
+    tracing::error!("Catch unexpected appliaction error");
+
     Error::Unimplemented(Json(ApplicationError::from_eyre(
         "API",
         "faced unexpected error",
