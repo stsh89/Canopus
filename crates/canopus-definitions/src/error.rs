@@ -3,11 +3,10 @@ use serde::{Deserialize, Serialize};
 #[derive(thiserror::Error, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ApplicationError {
-    #[error("{subsystem} {description}. Details: {details}")]
+    #[error("{description}")]
     Internal {
-        subsystem: String,
         description: String,
-        details: String,
+        details: Option<String>,
     },
 
     #[error("{0}")]
@@ -24,15 +23,32 @@ pub enum ApplicationError {
 }
 
 impl ApplicationError {
+    pub fn from_eyre(description: &str, err: eyre::Report) -> Self {
+        ApplicationError::Internal {
+            description: description.to_string(),
+            details: Some(format!("{:}", err)),
+        }
+    }
+
+    pub fn internal(descripton: &str, err: impl std::error::Error) -> Self {
+        ApplicationError::Internal {
+            description: descripton.to_string(),
+            details: Some(format!("{:?}", err)),
+        }
+    }
+
     pub fn invalid_argument(description: &str) -> Self {
         ApplicationError::InvalidArgument(description.to_string())
     }
 
-    pub fn from_eyre(subsystem: &str, descripton: &str, report: eyre::Report) -> Self {
+    pub fn msg(description: &str) -> Self {
         ApplicationError::Internal {
-            subsystem: subsystem.to_string(),
-            description: descripton.to_string(),
-            details: format!("{:?}", report),
+            description: description.to_string(),
+            details: None,
         }
+    }
+
+    pub fn repository(description: &str) -> Self {
+        ApplicationError::Repository(description.to_string())
     }
 }

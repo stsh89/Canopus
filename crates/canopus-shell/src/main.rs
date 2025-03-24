@@ -10,7 +10,7 @@ async fn main() -> eyre::Result<()> {
 
     let app = App::initialize().wrap_err_with(|| "Failed to initialize CLI application")?;
 
-    println!(r#"Enter "help" for usage hints. Enter "quit" or "exit" to close the shell."#);
+    println!(r#"Press Enter for usage hints. Enter "quit" or "exit" to close the shell."#);
     println!();
     println!();
 

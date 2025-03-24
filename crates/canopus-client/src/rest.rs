@@ -1,3 +1,5 @@
+use core::panic;
+
 use canopus_definitions::{ApplicationError, ApplicationResult};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -24,97 +26,82 @@ pub enum Path {
 
 pub async fn create<T, D>(
     client: &reqwest::Client,
-    resource: Resource<'_>,
+    url: impl Into<Url>,
     data: D,
-) -> eyre::Result<ApiResponse<T>>
+) -> reqwest::Result<ApiResponse<T>>
 where
     T: for<'de> Deserialize<'de>,
     D: Serialize,
 {
-    let url = Url::try_from(resource)?;
-
-    let response = client
-        .post(url)
+    client
+        .post(url.into())
         .json(&data)
         .send()
         .await?
         .json::<ApiResponse<T>>()
-        .await?;
-
-    Ok(response)
+        .await
 }
 
 pub async fn delete<T>(
     client: &reqwest::Client,
-    resource: Resource<'_>,
-) -> eyre::Result<ApiResponse<T>>
+    url: impl Into<Url>,
+) -> reqwest::Result<ApiResponse<T>>
 where
     T: for<'de> Deserialize<'de>,
 {
-    let url = Url::try_from(resource)?;
-
-    let response = client
-        .delete(url)
+    client
+        .delete(url.into())
         .send()
         .await?
         .json::<ApiResponse<T>>()
-        .await?;
-
-    Ok(response)
+        .await
 }
 
 pub async fn get<T>(
     client: &reqwest::Client,
-    resource: Resource<'_>,
+    url: impl Into<Url>,
     query: Option<&[(&str, &str)]>,
-) -> eyre::Result<ApiResponse<T>>
+) -> reqwest::Result<ApiResponse<T>>
 where
     T: for<'de> Deserialize<'de>,
 {
-    let url = Url::try_from(resource)?;
-
-    let mut request = client.get(url);
+    let mut request = client.get(url.into());
 
     if let Some(query) = query {
         request = request.query(query);
     }
 
-    let response = request.send().await?.json::<ApiResponse<T>>().await?;
-
-    Ok(response)
+    request.send().await?.json::<ApiResponse<T>>().await
 }
 
 pub async fn patch<T, D>(
     client: &reqwest::Client,
-    resource: Resource<'_>,
+    url: impl Into<Url>,
     data: D,
-) -> eyre::Result<ApiResponse<T>>
+) -> reqwest::Result<ApiResponse<T>>
 where
     T: for<'de> Deserialize<'de>,
     D: Serialize,
 {
-    let url = Url::try_from(resource)?;
-
-    let response = client
-        .patch(url)
+    client
+        .patch(url.into())
         .json(&data)
         .send()
         .await?
         .json::<ApiResponse<T>>()
-        .await?;
-
-    Ok(response)
+        .await
 }
 
-impl TryFrom<Resource<'_>> for Url {
-    type Error = eyre::Error;
-
-    fn try_from(value: Resource) -> eyre::Result<Url> {
+impl From<Resource<'_>> for Url {
+    fn from(value: Resource) -> Url {
         let Resource { base_url, path } = value;
 
-        let url = base_url.join(&path.to_string())?;
-
-        Ok(url)
+        base_url.join(&path.to_string()).unwrap_or_else(|_path| {
+            panic!(
+                "resource path should be a valid URL: '{}' is not a valid URL",
+                path
+            )
+        })
     }
 }
 

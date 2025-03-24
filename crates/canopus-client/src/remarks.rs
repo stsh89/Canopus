@@ -1,5 +1,5 @@
 use crate::{
-    Client, from_eyre,
+    Client, from_reqwest_err,
     rest::{self, Path, Resource},
 };
 use canopus_definitions::{ApplicationResult, Page, Remark};
@@ -30,7 +30,7 @@ pub async fn create(client: &Client, new_remark: NewRemark) -> ApplicationResult
         new_remark,
     )
     .await
-    .map_err(|err| from_eyre("failed to request remark creation", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -45,7 +45,7 @@ pub async fn delete(client: &Client, id: Uuid) -> ApplicationResult<Remark> {
         },
     )
     .await
-    .map_err(|err| from_eyre("failed to request remark deletion", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -65,7 +65,7 @@ pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationRe
         query.as_deref(),
     )
     .await
-    .map_err(|err| from_eyre("failed to request remarks page", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -81,7 +81,7 @@ pub async fn show(client: &Client, id: Uuid) -> ApplicationResult<Remark> {
         None,
     )
     .await
-    .map_err(|err| from_eyre("failed to request remark", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -101,6 +101,6 @@ pub async fn update(
         updates,
     )
     .await
-    .map_err(|err| from_eyre("failed to update remark", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }

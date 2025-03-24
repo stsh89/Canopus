@@ -1,20 +1,15 @@
-use crate::SUBSYSTEM_NAME;
 use canopus_definitions::{ApplicationError, ApplicationResult};
 
 const EDIT_CONTENT_FILE_NAME: &str = "EDIT_CONTENT";
 
 pub fn edit(contents: &str) -> ApplicationResult<String> {
-    set_file_contents(contents).map_err(|err| {
-        ApplicationError::from_eyre(SUBSYSTEM_NAME, "unable to prepare file to edit", err)
-    })?;
+    set_file_contents(contents).map_err(from_fs_err)?;
 
     start()
 }
 
 pub fn open() -> ApplicationResult<String> {
-    clear_flie_contents().map_err(|err| {
-        ApplicationError::from_eyre(SUBSYSTEM_NAME, "unable to prepare file to edit", err)
-    })?;
+    clear_flie_contents().map_err(from_fs_err)?;
 
     start()
 }
@@ -24,40 +19,31 @@ fn start() -> ApplicationResult<String> {
         .arg(EDIT_CONTENT_FILE_NAME)
         .status()
         .map_err(|err| {
-            ApplicationError::from_eyre(
-                SUBSYSTEM_NAME,
-                "was not able to start text editor",
-                eyre::Report::from(err),
+            ApplicationError::internal(
+                "failed to start helix editor, check if it is installed",
+                err,
             )
         })?;
 
     if !status.success() {
-        return Err(ApplicationError::Internal {
-            subsystem: SUBSYSTEM_NAME.to_string(),
-            description: "received unexpected status from editor".to_string(),
-            details: format!("{:}", status),
-        });
+        return Err(ApplicationError::msg(
+            "helix editor exited with unsuccessful status code",
+        ));
     }
 
-    let content = std::fs::read_to_string(EDIT_CONTENT_FILE_NAME).map_err(|err| {
-        ApplicationError::from_eyre(
-            SUBSYSTEM_NAME,
-            "was not able to read edited content",
-            eyre::Report::from(err),
-        )
-    })?;
+    let content = std::fs::read_to_string(EDIT_CONTENT_FILE_NAME).map_err(from_fs_err)?;
 
     Ok(content.trim().to_string())
 }
 
-fn set_file_contents(contents: &str) -> eyre::Result<()> {
-    std::fs::write(EDIT_CONTENT_FILE_NAME, contents)?;
-
-    Ok(())
+fn set_file_contents(contents: &str) -> std::io::Result<()> {
+    std::fs::write(EDIT_CONTENT_FILE_NAME, contents)
 }
 
-fn clear_flie_contents() -> eyre::Result<()> {
-    std::fs::write(EDIT_CONTENT_FILE_NAME, "")?;
+fn clear_flie_contents() -> std::io::Result<()> {
+    std::fs::write(EDIT_CONTENT_FILE_NAME, "")
+}
 
-    Ok(())
+fn from_fs_err(err: std::io::Error) -> ApplicationError {
+    ApplicationError::internal("editor failed to make file IO operation", err)
 }

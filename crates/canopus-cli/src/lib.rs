@@ -3,12 +3,10 @@ mod display;
 mod editor;
 
 use canopus_client::Client;
-use canopus_definitions::ApplicationResult;
+use canopus_definitions::{ApplicationError, ApplicationResult};
 use clap::{Parser, Subcommand};
 use commands::{RemarksCommands, TagsCommands};
 use display::Renderer;
-
-const SUBSYSTEM_NAME: &str = "Cli";
 
 #[derive(Parser)]
 pub struct Cli {
@@ -26,8 +24,9 @@ pub enum Commands {
 }
 
 impl Cli {
-    pub fn new_with_args(args: &[String]) -> eyre::Result<Self> {
-        let cli = Self::try_parse_from(args)?;
+    pub fn new_with_args(args: &[String]) -> ApplicationResult<Self> {
+        let cli =
+            Self::try_parse_from(args).map_err(|err| ApplicationError::msg(&err.to_string()))?;
 
         Ok(cli)
     }
@@ -39,7 +38,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn initialize() -> eyre::Result<Self> {
+    pub fn initialize() -> ApplicationResult<Self> {
         let client = Client::from_env()?;
         let renderer = Renderer::new();
 
@@ -50,8 +49,8 @@ impl App {
         let Cli { command } = cli;
 
         match command {
-            Commands::Tags(command) => command.execute(&self).await?,
-            Commands::Remarks(command) => command.execute(&self).await?,
+            Commands::Tags(command) => command.execute(self).await?,
+            Commands::Remarks(command) => command.execute(self).await?,
         }
 
         Ok(())

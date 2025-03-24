@@ -1,5 +1,5 @@
 use crate::{
-    Client, from_eyre,
+    Client, from_reqwest_err,
     rest::{self, Path, Resource},
 };
 use canopus_definitions::{ApplicationResult, Page, Tag};
@@ -22,7 +22,7 @@ pub async fn index(client: &Client, page_token: Option<String>) -> ApplicationRe
         query.as_deref(),
     )
     .await
-    .map_err(|err| from_eyre("failed to request tags page", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -38,7 +38,7 @@ pub async fn show(client: &Client, id: Uuid) -> ApplicationResult<Tag> {
         None,
     )
     .await
-    .map_err(|err| from_eyre("failed to request tag", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 
@@ -54,7 +54,7 @@ pub async fn update(client: &Client, id: Uuid, title: String) -> ApplicationResu
         TagChanges { title },
     )
     .await
-    .map_err(|err| from_eyre("failed to update tag", err))?
+    .map_err(from_reqwest_err)?
     .into()
 }
 

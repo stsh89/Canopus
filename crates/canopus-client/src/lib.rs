@@ -3,12 +3,9 @@ pub mod tags;
 
 mod rest;
 
-use canopus_definitions::ApplicationError;
-use eyre::WrapErr;
+use canopus_definitions::{ApplicationError, ApplicationResult};
 use reqwest::Url;
 use std::env;
-
-const SUBSYSTEM_NAME: &str = "Client";
 
 pub struct Client {
     inner: reqwest::Client,
@@ -16,21 +13,22 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn from_env() -> eyre::Result<Self> {
-        let base_url_string =
-            env::var("CANOPUS_BASE_URL").wrap_err_with(|| "Missing CANOPUS_BASE_URL env var")?;
+    pub fn from_env() -> ApplicationResult<Self> {
+        let base_url_string = env::var("CANOPUS_BASE_URL")
+            .map_err(|err| ApplicationError::internal("missing CANOPUS_BASE_URL env var", err))?;
 
-        let base_url = Url::parse(&base_url_string)
-            .wrap_err_with(|| "Failed to parse CANOPUS_BASE_URL env var as URL")?;
+        let base_url = Url::parse(&base_url_string).map_err(|err| {
+            ApplicationError::internal("failed to parse CANOPUS_BASE_URL env var as URL", err)
+        })?;
 
         let inner = reqwest::Client::builder()
             .build()
-            .wrap_err_with(|| "Failed to build reqwest client")?;
+            .map_err(from_reqwest_err)?;
 
         Ok(Client { base_url, inner })
     }
 }
 
-fn from_eyre(description: &str, report: eyre::Report) -> ApplicationError {
-    ApplicationError::from_eyre(SUBSYSTEM_NAME, description, report)
+fn from_reqwest_err(err: reqwest::Error) -> ApplicationError {
+    ApplicationError::internal("client failed to communicate with the service", err)
 }

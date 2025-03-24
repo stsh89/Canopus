@@ -39,7 +39,7 @@ async fn main() -> eyre::Result<()> {
 #[catch(404)]
 #[tracing::instrument(name = "Not found error catcher")]
 fn not_found(req: &Request) -> Error {
-    tracing::error!("Catch not found API error");
+    tracing::error!("Catch not found error");
 
     Error::Unimplemented(Json(ApplicationError::Unimplemented))
 }
@@ -47,11 +47,7 @@ fn not_found(req: &Request) -> Error {
 #[catch(500)]
 #[tracing::instrument(name = "Internal error catcher")]
 fn internal_error(req: &Request) -> Error {
-    tracing::error!("Catch unexpected appliaction error");
+    tracing::error!("Catch internal error");
 
-    Error::Unimplemented(Json(ApplicationError::from_eyre(
-        "API",
-        "faced unexpected error",
-        eyre::Report::msg(req.to_string()),
-    )))
+    Error::Unimplemented(Json(ApplicationError::msg("Something went wrong")))
 }
