@@ -1,4 +1,4 @@
-use canopus_cli::{Cli, CliContext};
+use canopus_cli::{App, Cli};
 use canopus_definitions::ApplicationError;
 use eyre::WrapErr;
 
@@ -8,7 +8,7 @@ const BASE_URL: &str = "canopus://127.0.0.1";
 async fn main() -> eyre::Result<()> {
     dotenvy::dotenv().wrap_err_with(|| "Failed to load .env file")?;
 
-    let app = CliContext::initialize().wrap_err_with(|| "Failed to initialize CLI application")?;
+    let app = App::initialize().wrap_err_with(|| "Failed to initialize CLI application")?;
 
     println!(r#"Enter "help" for usage hints. Enter "quit" or "exit" to close the shell."#);
     println!();
