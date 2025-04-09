@@ -1,14 +1,29 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # Catalog
+//!
+//! Core library whose purpose is to provide basic definitions and operations
+//! around network devices, primarily for collection and listing purposes.
+//!  
+//! ## Work in progress
+//!
+//! [x] Brand definition
+//! [x] Create brand operation
+//! [ ] Update brand operation
+//!
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod brands;
+mod error;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub use brands::*;
+pub use error::*;
+
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+pub struct Record<T> {
+    pub created_at: DateTime<Utc>,
+    pub data: T,
+    pub id: Uuid,
+    pub updated_at: DateTime<Utc>,
 }

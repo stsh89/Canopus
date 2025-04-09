@@ -417,6 +417,11 @@ dependencies = [
 [[package]]
 name = "catalog"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "cc"
