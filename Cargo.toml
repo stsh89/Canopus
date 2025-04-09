@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [
+members = [ "catalog",
     "crates/canopus-api",
     "crates/canopus-cli",
     "crates/canopus-client",
@@ -9,6 +9,7 @@ members = [
     "crates/canopus-operations",
     "crates/canopus-repository",
     "crates/canopus-shell",
+    "crates/canopus-tests",
 ]
 
 [workspace.package]

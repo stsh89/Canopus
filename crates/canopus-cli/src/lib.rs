@@ -32,12 +32,12 @@ impl Cli {
     }
 }
 
-pub struct App {
+pub struct CliApp {
     client: Client,
     renderer: Renderer,
 }
 
-impl App {
+impl CliApp {
     pub fn initialize() -> ApplicationResult<Self> {
         let client = Client::from_env()?;
         let renderer = Renderer::new();

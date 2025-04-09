@@ -1,0 +1,172 @@
+use std::net::SocketAddr;
+
+use canopus_cli::{Cli, CliApp};
+use canopus_definitions::ApplicationError;
+use eyre::WrapErr;
+use tokio::{
+    io::AsyncReadExt,
+    net::{TcpListener, TcpStream},
+};
+
+const BASE_URL: &str = "canopus://127.0.0.1";
+
+#[tokio::main]
+async fn main() -> eyre::Result<()> {
+    dotenvy::dotenv().wrap_err_with(|| "Failed to load .env file")?;
+
+    let cli = ShellArguments {
+        remote: Some("127.0.0.1:8080".to_string()),
+    };
+
+    cli.execute().await
+}
+
+struct ShellArguments {
+    remote: Option<String>,
+}
+
+impl ShellArguments {
+    async fn execute(self) -> eyre::Result<()> {
+        match self.remote {
+            Some(socket_addr) => {
+                let socket_addr = socket_addr.parse()?;
+                start_socket_communication(socket_addr).await
+            }
+            None => start_repl().await,
+        }
+    }
+}
+
+async fn start_socket_communication(socket_addr: SocketAddr) -> eyre::Result<()> {
+    // let listener = TcpListener::bind(socket_addr).await?;
+    let mut stream = TcpStream::connect(socket_addr).await?;
+    // let mut buf = vec![0; 2];
+
+    // match stream.read(&mut buf).await {
+    //     Ok(n) if n == 0 => {
+    //         println!("Server closed the connection.");
+    //     }
+    //     Ok(n) => {
+    //         // Convert the received bytes into a string
+    //         if let Ok(response) = std::str::from_utf8(&buf[..n]) {
+    //             println!("Received: {}", response);
+    //         } else {
+    //             eprintln!("Failed to parse server response as UTF-8.");
+    //         }
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Failed to read from server: {}", e);
+    //     }
+    // }
+
+    let message = read_message(&mut stream).await?;
+    println!("Received: {}", message);
+
+    let message = read_message(&mut stream).await?;
+    println!("Received: {}", message);
+
+    // loop {
+    //     let message = read_message(&mut stream).await?;
+    //     println!("Received: {}", message);
+
+    //     if message == "quit" {
+    //         println!("Connection closed.");
+    //         break;
+    //     }
+    // }
+
+    Ok(())
+}
+
+async fn read_message(stream: &mut TcpStream) -> eyre::Result<String> {
+    let mut buf = [0; 2]; // Small buffer of size 2
+    let mut message = String::new(); // Accumulator for the complete message
+
+    loop {
+        match stream.read(&mut buf).await {
+            Ok(n) if n == 0 => {
+                // Connection closed
+                println!("Connection closed.");
+                break;
+            }
+            Ok(n) => {
+                // Append the received chunk to the message accumulator
+                if let Ok(chunk) = std::str::from_utf8(&buf[..n]) {
+                    message.push_str(chunk);
+                    // Check if the message ends with the delimiter
+                    if message.ends_with('\n') {
+                        println!("Received complete message: {}", message.trim_end());
+                        break;
+                    }
+                } else {
+                    eprintln!("Failed to parse received data as UTF-8.");
+                    break;
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to read from socket: {}", e);
+                break;
+            }
+        }
+    }
+
+    Ok(message)
+}
+
+async fn start_repl() -> eyre::Result<()> {
+    let app = CliApp::initialize().wrap_err_with(|| "Failed to initialize CLI application")?;
+
+    println!(r#"Press Enter for usage hints. Enter "quit" or "exit" to close the shell."#);
+    println!();
+    println!();
+
+    loop {
+        let input = read().wrap_err_with(|| "Failed to read user input")?;
+        let input = input.trim();
+
+        if input == "quit" || input == "exit" {
+            return Ok(());
+        }
+
+        let mut args = match shlex::split(input)
+            .ok_or_else(|| ApplicationError::invalid_argument("malformed command input"))
+        {
+            Ok(args) => args,
+            Err(err) => {
+                eprintln!("{}", err);
+                continue;
+            }
+        };
+
+        args.insert(0, "".to_string());
+
+        let cli = match Cli::new_with_args(&args) {
+            Ok(cli) => cli,
+            Err(err) => {
+                eprintln!("{err}");
+                continue;
+            }
+        };
+
+        if let Err(err) = app.execute(cli).await {
+            eprintln!("{}", err);
+        }
+    }
+}
+
+fn prompt() -> String {
+    format!("{}> ", BASE_URL)
+}
+
+fn read() -> eyre::Result<String> {
+    use std::io::Write;
+
+    std::io::stdout().write_all(prompt().as_bytes())?;
+    std::io::stdout().flush()?;
+
+    let mut buffer = String::new();
+
+    std::io::stdin().read_line(&mut buffer)?;
+
+    Ok(buffer)
+}

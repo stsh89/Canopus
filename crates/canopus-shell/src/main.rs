@@ -1,66 +1,88 @@
-use canopus_cli::{App, Cli};
-use canopus_definitions::ApplicationError;
-use eyre::WrapErr;
-
-const BASE_URL: &str = "canopus://127.0.0.1";
+use eyre::Result;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+    task::JoinHandle,
+};
 
 #[tokio::main]
-async fn main() -> eyre::Result<()> {
-    dotenvy::dotenv().wrap_err_with(|| "Failed to load .env file")?;
+async fn main() -> Result<()> {
+    let app = ShellApp::new().await?;
+    let handle = start_tcp_stream(app).await;
 
-    let app = App::initialize().wrap_err_with(|| "Failed to initialize CLI application")?;
+    handle.await??;
 
-    println!(r#"Press Enter for usage hints. Enter "quit" or "exit" to close the shell."#);
-    println!();
-    println!();
+    Ok(())
+}
 
-    loop {
-        let input = read().wrap_err_with(|| "Failed to read user input")?;
-        let input = input.trim();
+async fn start_tcp_stream(mut app: ShellApp) -> JoinHandle<Result<()>> {
+    tokio::spawn(async move {
+        loop {
+            let (mut stream, addr) = app.tcp_listener.accept().await?;
+            println!("Incoming connection from: {}", addr);
+            app.sessions_count += 1;
+            println!("Sessions count: {}", app.sessions_count);
 
-        if input == "quit" || input == "exit" {
-            return Ok(());
+            stream.write_all("Hello, world!".as_bytes()).await?;
+            start_tcp_repl(stream).await;
+            // tokio::spawn(async move {
+            //     let handle = .await;
+            //     handle.await??;
+
+            //     Ok(())
+            // });
+
+            // Ok(())
+        }
+    })
+}
+
+async fn start_tcp_repl(mut stream: TcpStream) -> JoinHandle<Result<()>> {
+    tokio::spawn(async move {
+        loop {
+            let mut buf = vec![0; 1024];
+            match stream.read(&mut buf).await {
+                Ok(n) if n == 0 => {
+                    println!("Connection closed.");
+                    break;
+                }
+                Ok(n) => {
+                    // Convert the received bytes into a string
+                    if let Ok(response) = std::str::from_utf8(&buf[..n]) {
+                        if response == "exit" {
+                            stream.write_all(b"Bye, bye").await?;
+
+                            break;
+                        } else {
+                            stream.write_all(response.as_bytes()).await?;
+                        }
+
+                        println!("Received: {}", response);
+                    } else {
+                        eprintln!("Failed to parse server response as UTF-8.");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to read from server: {}", e);
+                    break;
+                }
+            }
         }
 
-        let mut args = match shlex::split(input)
-            .ok_or_else(|| ApplicationError::invalid_argument("malformed command input"))
-        {
-            Ok(args) => args,
-            Err(err) => {
-                eprintln!("{}", err);
-                continue;
-            }
-        };
+        Ok::<(), eyre::Error>(())
+    })
+}
 
-        args.insert(0, "".to_string());
+struct ShellApp {
+    sessions_count: u8,
+    tcp_listener: TcpListener,
+}
 
-        let cli = match Cli::new_with_args(&args) {
-            Ok(cli) => cli,
-            Err(err) => {
-                eprintln!("{err}");
-                continue;
-            }
-        };
-
-        if let Err(err) = app.execute(cli).await {
-            eprintln!("{}", err);
-        }
+impl ShellApp {
+    async fn new() -> Result<Self> {
+        Ok(ShellApp {
+            sessions_count: 0,
+            tcp_listener: TcpListener::bind("127.0.0.1:8080").await?,
+        })
     }
-}
-
-fn prompt() -> String {
-    format!("{}> ", BASE_URL)
-}
-
-fn read() -> eyre::Result<String> {
-    use std::io::Write;
-
-    std::io::stdout().write_all(prompt().as_bytes())?;
-    std::io::stdout().flush()?;
-
-    let mut buffer = String::new();
-
-    std::io::stdin().read_line(&mut buffer)?;
-
-    Ok(buffer)
 }

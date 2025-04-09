@@ -1,4 +1,4 @@
-use canopus_cli::{App, Cli};
+use canopus_cli::{CliApp, Cli};
 use clap::Parser;
 use eyre::WrapErr;
 
@@ -11,7 +11,7 @@ async fn main() -> eyre::Result<()> {
         Err(err) => err.exit(),
     };
 
-    App::initialize()?.execute(cli).await?;
+    CliApp::initialize()?.execute(cli).await?;
 
     Ok(())
 }

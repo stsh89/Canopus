@@ -1,4 +1,4 @@
-use crate::{App, editor};
+use crate::{CliApp, editor};
 use canopus_client::remarks::{self, NewRemark, RemarkUpdates};
 use canopus_definitions::ApplicationResult;
 use clap::Subcommand;
@@ -65,8 +65,8 @@ pub enum RemarksCommands {
 }
 
 impl RemarksCommands {
-    pub async fn execute(self, app: &App) -> ApplicationResult<()> {
-        let App { client, renderer } = app;
+    pub async fn execute(self, app: &CliApp) -> ApplicationResult<()> {
+        let CliApp { client, renderer } = app;
 
         match self {
             Self::AddRemarkTags { id, tags } => {

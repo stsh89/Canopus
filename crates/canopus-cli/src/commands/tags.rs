@@ -1,4 +1,4 @@
-use crate::App;
+use crate::CliApp;
 use canopus_client::tags;
 use canopus_definitions::ApplicationResult;
 use clap::{Subcommand, arg};
@@ -24,8 +24,8 @@ pub enum TagsCommands {
 }
 
 impl TagsCommands {
-    pub async fn execute(self, app: &App) -> ApplicationResult<()> {
-        let App { client, renderer } = app;
+    pub async fn execute(self, app: &CliApp) -> ApplicationResult<()> {
+        let CliApp { client, renderer } = app;
 
         match self {
             Self::ListTags { page_token } => {

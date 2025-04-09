@@ -1,0 +1,87 @@
+use tokio::{
+    sync::mpsc::{Receiver, Sender},
+    task::JoinHandle,
+};
+
+#[tokio::main]
+async fn main() -> eyre::Result<()> {
+    let (sender, receiver) = tokio::sync::mpsc::channel::<String>(10);
+
+    writer(receiver).await;
+    reader(sender).await;
+
+    Ok(())
+}
+
+async fn writer(receiver: Receiver<String>) {
+    loop {
+        let handle = write_messages(receiver);
+
+        match handle.await {
+            Ok(_) => {
+                println!("Task completed successfully.");
+                break;
+            }
+            Err(err) if err.is_panic() => {
+                println!("Task panicked! Restarting...");
+                continue; // Restart the task
+            }
+            Err(err) => {
+                eprintln!("Task failed with an unknown error: {}", err);
+                break;
+            }
+        }
+    }
+}
+
+async fn reader(sender: Sender<String>) {
+    loop {
+        let handle = read_messages(sender.clone());
+
+        match handle.await {
+            Ok(_) => {
+                println!("Task completed successfully.");
+                break;
+            }
+            Err(err) if err.is_panic() => {
+                println!("Task panicked! Restarting...");
+                continue; // Restart the task
+            }
+            Err(err) => {
+                eprintln!("Task failed with an unknown error: {}", err);
+                break;
+            }
+        }
+    }
+}
+
+fn write_messages(mut receiver: Receiver<String>) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        while let Some(message) = receiver.recv().await {
+            println!("Received message: {}", message);
+        }
+    })
+}
+
+fn read_messages(sender: Sender<String>) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            let mut input = String::new();
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read user input");
+
+            input = input.trim().to_string();
+
+            if input == "panic" {
+                panic!("Panic message received")
+            }
+
+            if input == "exit" {
+                break;
+            }
+
+            sender.send(input).await.expect("Failed to send message");
+        }
+    })
+}
