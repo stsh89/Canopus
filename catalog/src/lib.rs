@@ -7,7 +7,7 @@
 //!
 //! [x] Brand definition
 //! [x] Create brand operation
-//! [ ] Delete brand operation
+//! [x] Delete brand operation
 //!
 
 mod brands;

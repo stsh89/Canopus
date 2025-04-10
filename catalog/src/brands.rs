@@ -1,8 +1,14 @@
+use uuid::Uuid;
+
 use crate::{Error, Record, Result};
 use std::{fmt::Display, str::FromStr};
 
 const MAX_BRAND_NAME_LENGTH: usize = 100;
 const MIN_BRAND_NAME_LENGTH: usize = 2;
+
+pub trait FindOneAndDeleteBrand {
+    fn find_one_and_delete_brand(&self, id: Uuid) -> impl Future<Output = Result<Record<Brand>>>;
+}
 
 pub trait InsertBrand {
     fn insert_brand(&self, brand: Brand) -> impl Future<Output = Result<Record<Brand>>>;
@@ -10,6 +16,10 @@ pub trait InsertBrand {
 
 pub struct CreateBrand<'a, IR> {
     pub repo: &'a IR,
+}
+
+pub struct DeleteBrand<'a, FDR> {
+    pub repo: &'a FDR,
 }
 
 pub struct CreateBrandParameters {
@@ -58,9 +68,9 @@ impl BrandName {
     }
 }
 
-impl<I> CreateBrand<'_, I>
+impl<IR> CreateBrand<'_, IR>
 where
-    I: InsertBrand,
+    IR: InsertBrand,
 {
     pub async fn execute(&self, parameters: CreateBrandParameters) -> Result<Record<Brand>> {
         let CreateBrandParameters { name } = parameters;
@@ -70,6 +80,15 @@ where
         });
 
         self.repo.insert_brand(brand).await
+    }
+}
+
+impl<FDR> DeleteBrand<'_, FDR>
+where
+    FDR: FindOneAndDeleteBrand,
+{
+    pub async fn execute(&self, id: Uuid) -> Result<Record<Brand>> {
+        self.repo.find_one_and_delete_brand(id).await
     }
 }
 
