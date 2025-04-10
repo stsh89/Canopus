@@ -2,13 +2,6 @@
 //!
 //! Core library whose purpose is to provide basic definitions and operations
 //! around network devices, primarily for collection and listing purposes.
-//!  
-//! ## Work in progress
-//!
-//! [x] Brand definition
-//! [x] Create brand operation
-//! [x] Delete brand operation
-//! [x] List brands operation
 //!
 
 mod brands;
