@@ -1,6 +1,6 @@
 use canopus_catalog::{
-    Brand, BrandAttributes, BrandName, Error as CatalogError, InsertBrand, Record,
-    Result as CatalogResult,
+    Brand, BrandAttributes, BrandName, Error as CatalogError, FindOneAndDeleteBrand, InsertBrand,
+    Record, Result as CatalogResult, SelectBrands,
 };
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -27,6 +27,25 @@ impl Repository {
         let pool = sqlx::PgPool::connect(url).await?;
 
         Ok(Self { pool })
+    }
+}
+
+impl FindOneAndDeleteBrand for Repository {
+    async fn find_one_and_delete_brand(&self, id: Uuid) -> CatalogResult<Record<Brand>> {
+        let row = sqlx::query_as!(
+            BrandRow,
+            r#"
+DELETE from brands
+WHERE id = $1
+RETURNING id, name, created_at, updated_at
+            "#,
+            id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(from_sqlx_err)?;
+
+        row.try_into()
     }
 }
 
@@ -57,6 +76,24 @@ RETURNING id, created_at, updated_at
             updated_at,
             data,
         })
+    }
+}
+
+impl SelectBrands for Repository {
+    async fn select_brands(&self) -> CatalogResult<Vec<Record<Brand>>> {
+        let rows = sqlx::query_as!(
+            BrandRow,
+            r#"
+SELECT id, name, created_at, updated_at
+FROM brands
+ORDER BY name
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(from_sqlx_err)?;
+
+        rows.into_iter().map(TryInto::try_into).collect()
     }
 }
 
