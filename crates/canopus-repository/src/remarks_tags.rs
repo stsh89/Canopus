@@ -7,7 +7,7 @@ use crate::from_sqlx_err;
 pub async fn create(tx: &mut PgTransaction<'_>, remark_id: Uuid, tag_id: Uuid) -> sqlx::Result<()> {
     sqlx::query!(
         r#"
-INSERT INTO  remarks_tags ( remark_id, tag_id )
+INSERT INTO remarks_tags ( remark_id, tag_id )
 VALUES ( $1, $2 )
         "#,
         remark_id,
