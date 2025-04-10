@@ -58,7 +58,7 @@ impl BrandName {
     }
 }
 
-impl<'a, I> CreateBrand<'a, I>
+impl<I> CreateBrand<'_, I>
 where
     I: InsertBrand,
 {
