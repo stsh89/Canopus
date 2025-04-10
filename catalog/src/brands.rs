@@ -14,6 +14,13 @@ pub trait InsertBrand {
     fn insert_brand(&self, brand: Brand) -> impl Future<Output = Result<Record<Brand>>>;
 }
 
+pub trait SelectBrands {
+    fn select_brands(
+        &self,
+        parameters: SelectBrandsParameters,
+    ) -> impl Future<Output = Result<Vec<Record<Brand>>>>;
+}
+
 pub struct CreateBrand<'a, IR> {
     pub repo: &'a IR,
 }
@@ -22,8 +29,22 @@ pub struct DeleteBrand<'a, FDR> {
     pub repo: &'a FDR,
 }
 
+pub struct ListBrands<'a, SR> {
+    pub repo: &'a SR,
+}
+
 pub struct CreateBrandParameters {
-    name: String,
+    pub name: String,
+}
+
+pub struct ListBrandsParameters {
+    pub id: Option<Uuid>,
+    pub limit: u16,
+}
+
+pub struct SelectBrandsParameters {
+    pub id: Option<Uuid>,
+    pub limit: u16,
 }
 
 pub struct Brand {
@@ -89,6 +110,19 @@ where
 {
     pub async fn execute(&self, id: Uuid) -> Result<Record<Brand>> {
         self.repo.find_one_and_delete_brand(id).await
+    }
+}
+
+impl<SB> ListBrands<'_, SB>
+where
+    SB: SelectBrands,
+{
+    pub async fn exectue(&self, parameters: ListBrandsParameters) -> Result<Vec<Record<Brand>>> {
+        let ListBrandsParameters { id, limit } = parameters;
+
+        self.repo
+            .select_brands(SelectBrandsParameters { id, limit })
+            .await
     }
 }
 
