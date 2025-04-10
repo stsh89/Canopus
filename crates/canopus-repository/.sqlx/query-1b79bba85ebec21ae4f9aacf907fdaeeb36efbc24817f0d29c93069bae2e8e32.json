@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM remarks_tags WHERE remark_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1b79bba85ebec21ae4f9aacf907fdaeeb36efbc24817f0d29c93069bae2e8e32"
+}

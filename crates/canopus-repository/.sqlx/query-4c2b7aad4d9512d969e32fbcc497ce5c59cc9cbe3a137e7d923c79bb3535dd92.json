@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\nWITH unused_tags AS (\n    SELECT id\n    FROM tags\n    LEFT JOIN remarks_tags ON remarks_tags.tag_id = tags.id\n    WHERE remarks_tags.tag_id IS NULL\n)\nDELETE FROM tags\nWHERE tags.id IN (SELECT unused_tags.id FROM unused_tags)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "4c2b7aad4d9512d969e32fbcc497ce5c59cc9cbe3a137e7d923c79bb3535dd92"
+}

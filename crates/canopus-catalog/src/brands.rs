@@ -11,7 +11,7 @@ pub trait FindOneAndDeleteBrand {
 }
 
 pub trait InsertBrand {
-    fn insert_brand(&self, brand: Brand) -> impl Future<Output = Result<Record<Brand>>>;
+    fn insert_brand(&self, data: Brand) -> impl Future<Output = Result<Record<Brand>>>;
 }
 
 pub trait SelectBrands {
@@ -52,7 +52,7 @@ pub struct Brand {
 }
 
 pub struct BrandAttributes {
-    name: BrandName,
+    pub name: BrandName,
 }
 
 pub struct BrandName(String);
@@ -86,6 +86,10 @@ impl BrandName {
         }
 
         Ok(BrandName(value))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 

@@ -1,7 +1,9 @@
 [workspace]
 resolver = "3"
-members = [ "catalog", "catalog-repo",
+members = [
     "crates/canopus-api",
+    "crates/canopus-catalog-repo",
+    "crates/canopus-catalog",
     "crates/canopus-cli",
     "crates/canopus-client",
     "crates/canopus-definitions",
@@ -41,3 +43,4 @@ canopus-definitions = { path = "crates/canopus-definitions" }
 canopus-engine = { path = "crates/canopus-engine" }
 canopus-operations = { path = "crates/canopus-operations" }
 canopus-repository = { path = "crates/canopus-repository" }
+canopus-catalog = { path = "crates/canopus-catalog" }

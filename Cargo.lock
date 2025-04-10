@@ -315,6 +315,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-catalog"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "canopus-catalog-repo"
+version = "0.1.0"
+dependencies = [
+ "canopus-catalog",
+ "chrono",
+ "eyre",
+ "sqlx",
+ "uuid",
+]
+
+[[package]]
 name = "canopus-cli"
 version = "0.1.0"
 dependencies = [
@@ -412,15 +432,6 @@ version = "0.1.0"
 dependencies = [
  "eyre",
  "tokio",
-]
-
-[[package]]
-name = "catalog"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "thiserror",
- "uuid",
 ]
 
 [[package]]
