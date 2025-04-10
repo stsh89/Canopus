@@ -108,7 +108,7 @@ impl<SB> ListBrands<'_, SB>
 where
     SB: SelectBrands,
 {
-    pub async fn exectue(&self) -> Result<Vec<Record<Brand>>> {
+    pub async fn execute(&self) -> Result<Vec<Record<Brand>>> {
         self.repo.select_brands().await
     }
 }

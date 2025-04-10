@@ -335,6 +335,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-catalog-rest-api"
+version = "0.1.0"
+dependencies = [
+ "canopus-catalog",
+ "canopus-catalog-repo",
+ "chrono",
+ "eyre",
+ "rocket",
+ "toml",
+ "uuid",
+]
+
+[[package]]
 name = "canopus-cli"
 version = "0.1.0"
 dependencies = [

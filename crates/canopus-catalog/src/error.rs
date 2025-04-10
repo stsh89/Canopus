@@ -11,4 +11,7 @@ pub enum Error {
 
     #[error("repository error: {0}")]
     Repo(String),
+
+    #[error("invalid argument: {0}")]
+    InvalidArgument(String),
 }

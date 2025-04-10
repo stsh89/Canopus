@@ -1,0 +1,15 @@
+[package]
+name = "canopus-catalog-rest-api"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+chrono = { workspace = true, features = ["serde"] }
+eyre = { workspace = true }
+rocket = { workspace = true, features = ["json"] }
+toml = { workspace = true }
+uuid = { workspace = true, features = ["serde"] }
+
+# Canopus dependencies
+canopus-catalog-repo = { workspace = true }
+canopus-catalog = { workspace = true }

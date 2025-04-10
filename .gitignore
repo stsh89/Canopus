@@ -3,3 +3,4 @@
 /pg_dumps/*.bak
 /target
 EDIT_CONTENT
+/crates/canopus-catalog-rest-api/config.toml
