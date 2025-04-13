@@ -401,6 +401,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-factory"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "eyre",
+ "rocket",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "canopus-operations"
 version = "0.1.0"
 dependencies = [

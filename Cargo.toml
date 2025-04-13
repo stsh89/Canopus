@@ -12,7 +12,7 @@ members = [
     "crates/canopus-repository",
     "crates/canopus-shell",
     "crates/canopus-tests",
-    "crates/canopus-catalog-rest-api",
+    "crates/canopus-catalog-rest-api", "crates/canopus-factory",
 ]
 
 [workspace.package]
