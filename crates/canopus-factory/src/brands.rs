@@ -90,6 +90,17 @@ pub async fn list_brands(repo: &Repo) -> AppResult<Vec<Brand>> {
     rows.into_iter().map(TryInto::try_into).collect()
 }
 
+pub async fn delete_brand(repo: &Repo, id: Uuid) -> AppResult<Brand> {
+    let row = remove_brand(repo, id).await.map_err(|err| match err {
+        sqlx::Error::RowNotFound => {
+            AppError::ResourceNotFound(format!("brand with the id {id} does not exist"))
+        }
+        other => other.into(),
+    })?;
+
+    row.try_into()
+}
+
 async fn insert_brand(repo: &Repo, changeset: CreateBrandChangeset) -> sqlx::Result<BrandRow> {
     let CreateBrandChangeset { name } = changeset;
 
@@ -113,8 +124,6 @@ RETURNING id, name, created_at, updated_at
 }
 
 async fn select_brands(repo: &Repo) -> sqlx::Result<Vec<BrandRow>> {
-    let pool = repo.pool();
-
     sqlx::query_as!(
         BrandRow,
         r#"
@@ -123,7 +132,21 @@ FROM brands
 ORDER by name ASC
         "#
     )
-    .fetch_all(pool)
+    .fetch_all(repo.pool())
+    .await
+}
+
+async fn remove_brand(repo: &Repo, id: Uuid) -> sqlx::Result<BrandRow> {
+    sqlx::query_as!(
+        BrandRow,
+        r#"
+DELETE from brands
+WHERE id = $1
+RETURNING id, name, created_at, updated_at
+        "#,
+        id
+    )
+    .fetch_one(repo.pool())
     .await
 }
 

@@ -1,6 +1,6 @@
 CREATE TABLE devices (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    brand_id uuid NOT NULL,
+    brand_id uuid NOT NULL references brands(id),
     name text NOT NULL,
     number_of_ports integer NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),

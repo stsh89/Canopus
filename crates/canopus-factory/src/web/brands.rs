@@ -1,12 +1,11 @@
+use super::{ServerState, WebResult, helpers};
 use crate::brands::{self, Brand, CreateBrandParameters};
 use chrono::{DateTime, Utc};
 use rocket::{
-    State, get, post,
+    State, delete, get, post,
     serde::{Deserialize, Serialize, json::Json},
 };
 use uuid::Uuid;
-
-use super::{ServerState, WebResult};
 
 #[post("/", data = "<form>")]
 pub async fn create(
@@ -14,7 +13,6 @@ pub async fn create(
     form: Option<Json<NewBrandForm>>,
 ) -> WebResult<Json<BrandPresenter>> {
     let form = form.map(|form| form.into_inner()).unwrap_or_default();
-
     let brand = brands::create_brand(&state.repo, form.into()).await?;
 
     Ok(Json(brand.into()))
@@ -25,6 +23,14 @@ pub async fn index(state: &State<ServerState>) -> WebResult<Json<Vec<BrandPresen
     let brands = brands::list_brands(&state.repo).await?;
 
     Ok(Json(brands.into_iter().map(Into::into).collect()))
+}
+
+#[delete("/<id>")]
+pub async fn delete(state: &State<ServerState>, id: &str) -> WebResult<Json<BrandPresenter>> {
+    let id = helpers::parse_id(id)?;
+    let brand = brands::delete_brand(&state.repo, id).await?;
+
+    Ok(Json(brand.into()))
 }
 
 #[derive(Serialize)]
